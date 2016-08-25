@@ -1,0 +1,14 @@
+local tArgs = { ... }
+
+if #tArgs == 2 then
+	if tArgs[1] == 'animate' or tArgs[1] == 'require_pass' or tArgs[1] == 'update' then
+		tArgs[2] = string.asBoolean(tArgs[2])
+	elseif tArgs[1] == 'desktop' then
+		tArgs[2] = colors.asColor(tArgs[2])
+	end
+	os.doAsAdmin(os.setConfig, tArgs[1], tArgs[2])
+elseif #tArgs == 1 then
+	print(os.getConfig(tArgs[1]))
+else
+	term.writeColored("usage: config <key> [new_value]\n", colors.orange)
+end

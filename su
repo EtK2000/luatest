@@ -1,0 +1,2 @@
+-- TODO: try and remove branding info
+os.doAsAdmin(shell.run, "shell")

@@ -1,0 +1,985 @@
+--------------FileX v1.2-------------
+---------------Program---------------
+--------------by Creator-------------
+
+--Variables--
+term.current(term.native())
+local copyPath = ""
+local copyHelp = ""
+local settDir = "FTPconfig"
+local progsDir = "subPrograms"
+local textutilsserialize = textutils.serialize
+local textutilsunserialize = textutils.unserialize
+local w, h = term.getSize()
+local folderMenu = {
+	term.current(),
+	16,
+	"Folder Options",
+	colors.white,
+	colors.blue,
+	colors.black,
+	colors.lightGray,
+	{
+		{
+			"Open",
+			"open",
+		},
+		{
+			"Delete",
+			"delete",
+		},
+		{
+			"Rename",
+			"rename",
+		},
+		{
+			"Move",
+			"move",
+		},
+		{
+			"Copy",
+			"copy",
+		},
+		{
+			"Cancel",
+			"cancel",
+		},
+	},
+}
+local fileMenu = {
+	term.current(),
+	16,
+	"File Options",
+	colors.white,
+	colors.blue,
+	colors.black,
+	colors.lightGray,
+	{
+		{
+			"Open",
+			"open",
+		},
+		{
+			"Delete",
+			"delete",
+		},
+		{
+			"Rename",
+			"rename",
+		},
+		{
+			"Move",
+			"move",
+		},
+		{
+			"Cancel",
+			"cancel",
+		},
+		{
+			"Run",
+			"run",
+		},
+		{
+			"Copy",
+			"copy",
+		},
+		{
+			"Open with",
+			"openWith",
+		},
+	},
+}
+local nilMenu = {
+	term.current(),
+	16,
+	"Options",
+	colors.white,
+	colors.blue,
+	colors.black,
+	colors.lightGray,
+	{
+		{
+			"Make a folder",
+			"makeFolder",
+		},
+		{
+			"Make a file",
+			"makeFile",
+		},
+		{
+			"Cancel",
+			"cancel",
+		},
+	},
+}
+local newExists = {
+	term.current(),
+	math.floor((w-32)/2),
+	math.floor((h-8)/2),
+	32,
+	8,
+	true,
+	"Overwrite?",
+	colors.white,
+	colors.blue,
+	"The destination already%exists, overwrite it?",
+	colors.black,
+	colors.lightGray,
+	{
+		{
+			"YES",
+			colors.black,
+			colors.white,
+			true,
+		},
+		{
+			"NO",
+			colors.black,
+			colors.white,
+			false,
+		},
+	},
+}
+local newFolderWindow = {
+	term.current(),
+	math.floor((w-32)/2),
+	math.floor((h-8)/2),
+	32,
+	8,
+	true,
+	"New folder name",
+	colors.white,
+	colors.blue,
+	"Write the name of%the new folder.",
+	colors.black,
+	colors.lightGray,
+	colors.white,
+	colors.black,
+}
+local newFileWindow = {
+	term.current(),
+	math.floor((w-32)/2),
+	math.floor((h-8)/2),
+	32,
+	8,
+	true,
+	"New file name",
+	colors.white,
+	colors.blue,
+	"Write the name of%the new file.",
+	colors.black,
+	colors.lightGray,
+	colors.white,
+	colors.black,
+}
+local upFileWindow = {
+	term.current(),
+	math.floor((w-32)/2),
+	math.floor((h-8)/2),
+	32,
+	8,
+	true,
+	"File path",
+	colors.white,
+	colors.blue,
+	"Write the path of%the file.",
+	colors.black,
+	colors.lightGray,
+	colors.white,
+	colors.black,
+}
+local moveFolderWindow = {
+	term.current(),
+	math.floor((w-32)/2),
+	math.floor((h-8)/2),
+	32,
+	8,
+	true,
+	"New folder path",
+	colors.white,
+	colors.blue,
+	"Write the name of%the new folder path.",
+	colors.black,
+	colors.lightGray,
+	colors.white,
+	colors.black,
+}
+local errorWindow = {
+	term.current(),
+	math.floor((w-32)/2),
+	math.floor((h-8)/2),
+	32,
+	8,
+	true,
+	"Error!",
+	colors.white,
+	colors.blue,
+	"",
+	colors.red,
+	colors.lightGray,
+	{
+		{
+			"OK",
+			colors.black,
+			colors.white
+		},
+	},
+}
+local bgColor = colors.black
+local txtColor = colors.white
+local domain = {}
+local currDir = ""
+local files = {}
+local Buttons = {
+	{
+		2,
+		2,
+		7,
+		1,
+		"Refresh",
+		colors.white,
+		colors.green,
+		"refresh"
+	},
+	{
+		11,
+		2,
+		2,
+		1,
+		"Up",
+		colors.white,
+		colors.green,
+		"up"
+	},
+	{
+		15,
+		2,
+		5,
+		1,
+		"Paste",
+		colors.white,
+		colors.green,
+		"paste"
+	},
+}
+local folderIcon = {
+	{
+	2,
+	2,
+	2,
+	2,
+	16,
+	16,
+	16,
+	16,
+	},
+	{
+	2,
+	2,
+	2,
+	2,
+	2,
+	2,
+	2,
+	2,
+	},
+	{
+	2,
+	2,
+	2,
+	2,
+	2,
+	2,
+	2,
+	2,
+	},
+	{
+	2,
+	2,
+	2,
+	2,
+	2,
+	2,
+	2,
+	2,
+	},
+}
+local fileIcon = {
+	{
+	8192,
+	8192,
+	8192,
+	8192,
+	8192,
+	8192,
+	8192,
+	8192,
+	},
+	{
+	8192,
+	8192,
+	8192,
+	8192,
+	8192,
+	8192,
+	8192,
+	8192,
+	},
+	{
+	8192,
+	8192,
+	8192,
+	8192,
+	8192,
+	8192,
+	8192,
+	8192,
+	},
+	{
+	8192,
+	8192,
+	8192,
+	8192,
+	8192,
+	8192,
+	8192,
+	8192,
+	},
+}
+local roFileIcon = {
+	{
+	8,
+	8,
+	8,
+	8,
+	8,
+	8,
+	8,
+	8,
+	},
+	{
+	8,
+	8,
+	8,
+	8,
+	8,
+	8,
+	8,
+	8,
+	},
+	{
+	8,
+	8,
+	8,
+	8,
+	8,
+	8,
+	8,
+	8,
+	},
+	{
+	8,
+	8,
+	8,
+	8,
+	8,
+	8,
+	8,
+	8,
+	},
+}
+
+local scroll = 0
+local globalButtonList = {}
+local notEnded = true
+local fileExtensions = {
+	['nfp'] = "nPaintPro",
+	['nfa'] = "nPaintPro",
+	['txt'] = "edit",
+	['exe'] = "shell",
+	['lua'] = "shell"
+}
+
+--Functions--
+
+local function detectButtonHit(buttonsToTest)
+	local event, button, x, y
+	repeat
+		event, button, x, y = os.pullEvent()
+	until event == "mouse_click" or event == "key"
+	if event == "mouse_click" then
+		for i,v in pairs(buttonsToTest) do
+			if v[1] <= x and x <= v[3] and v[2] <= y and y <= v[4] then
+				return {v[5], button, x, y}
+			end
+		end
+	elseif event == "key" then
+		return {"key:"..tostring(button)}
+	end
+	return {""}
+end
+
+local function mkStrShort(str,lenght,n)
+	local bufferTable = {}
+	local toReturnTable = {}
+	local lenghtN = tonumber(lenght)
+	if lenghtN == nil then return false end
+	for i = 0,n-1 do 
+		bufferTable[i+1] = string.sub(tostring(str),(i*lenghtN)+1,(i*lenghtN)+lenghtN)
+	end
+	for i,v in pairs(bufferTable) do
+		if v ~= nil then
+			toReturnTable[#toReturnTable+1] = v
+		end
+	end
+	return toReturnTable
+end
+
+local function clear(bgColorArg,full)
+	term.setBackgroundColor(bgColorArg or bgColor)
+	term.setTextColor(txtColor)
+	if full then
+		term.clear()
+	else
+		local x,y=term.getSize()
+		for i=3,y-1 do
+			term.setCursorPos(1,i)
+			term.clearLine()
+		end
+	end
+	term.setCursorPos(1,1)
+	globalButtonList = {}
+end
+
+local function dropDownMenu(tableInput,clearBg,x,y)
+	term.setCursorPos(1,1)
+	if clearBg ~= false then
+		clear(colors.cyan)
+	end
+	globalButtonList = {}
+	local nTable = {}
+	local dropDownMenuWindow = window.create(tableInput[1],x,y,tableInput[2],#tableInput[8]+1,true)
+	dropDownMenuWindow.setTextColor(tableInput[4])
+	dropDownMenuWindow.setBackgroundColor(tableInput[5])
+	dropDownMenuWindow.setCursorPos(1,1)
+	dropDownMenuWindow.clearLine()
+	dropDownMenuWindow.write(tableInput[3])
+	dropDownMenuWindow.setTextColor(tableInput[6])
+	dropDownMenuWindow.setBackgroundColor(tableInput[7])
+	for i = 1 , #tableInput[8] do
+		dropDownMenuWindow.setCursorPos(1,i+1)
+		dropDownMenuWindow.clearLine()
+		dropDownMenuWindow.write(tableInput[8][i][1])
+		globalButtonList[#globalButtonList+1] = {x+1,y+i,x+tableInput[2],y+i,tableInput[8][i][2]}
+	end
+	return detectButtonHit(globalButtonList)[1]
+end
+
+local function dialogBox(tableInput,clearBg)
+	if clearBg ~= false then
+		clear(colors.cyan)
+	end
+	local nTable = {}
+	dialogBoxWindow = window.create(
+	tableInput[1],
+	tableInput[2],
+	tableInput[3],
+	tableInput[4],
+	tableInput[5])
+	dialogBoxWindow.setBackgroundColor(tableInput[9])
+	dialogBoxWindow.setCursorPos(2,1)
+	dialogBoxWindow.clearLine()
+	dialogBoxWindow.setTextColor(tableInput[8])
+	dialogBoxWindow.write(tableInput[7])
+	dialogBoxWindow.setCursorPos(1,2)
+	dialogBoxWindow.setBackgroundColor(tableInput[12])
+	for i = 2 , tableInput[5] do
+		dialogBoxWindow.setCursorPos(1,i)
+		dialogBoxWindow.clearLine()
+	end
+	dialogBoxWindow.setCursorPos(1,2)
+	dialogBoxWindow.setTextColor(tableInput[11])
+	for token in string.gmatch(tableInput[10],"[^%%]+") do
+		nTable[#nTable+1] = token
+	end
+	for i,v in pairs(nTable) do
+		dialogBoxWindow.setCursorPos(2,1+i)
+		dialogBoxWindow.write(v)
+	end
+	local totalLenght = 0
+	globalButtonList = {}
+	for i,v in pairs(tableInput[13]) do
+		dialogBoxWindow.setCursorPos(2+totalLenght,tableInput[5]-1)
+		dialogBoxWindow.setTextColor(v[2])
+		dialogBoxWindow.setBackgroundColor(v[3])
+		local toWrite = " "..v[1].." "
+		dialogBoxWindow.write(toWrite)
+		if globalButtonList == nil then
+			globalButtonList = {{tableInput[2]+1+totalLenght,tableInput[3] + tableInput[5]-2,tableInput[2]+totalLenght + #toWrite,tableInput[3] + tableInput[5]-1,v[4]}}
+		else
+			globalButtonList[#globalButtonList+1] = {tableInput[2]+1+totalLenght,tableInput[3] + tableInput[5]-2,tableInput[2]+totalLenght + #toWrite,tableInput[3] + tableInput[5]-1,v[4]}
+		end
+		totalLenght = #toWrite + totalLenght + 2
+	end
+	local repeatIt = true
+	while repeatIt == true do
+		local unparsedResult = detectButtonHit(globalButtonList)
+		result = unparsedResult[1]
+		if result ~= "pong" then
+			repeatIt = false
+		end
+	end
+	return result
+end
+
+local function textBox(tableInput,secret,clearBg)
+	if clearBg ~= false then
+		clear(colors.cyan)
+	end
+	local nTable = {}
+	textBoxWindow = window.create(tableInput[1],tableInput[2],tableInput[3],tableInput[4],tableInput[5])
+	textBoxWindow.setCursorPos(2,1)
+	textBoxWindow.setBackgroundColor(tableInput[9])
+	textBoxWindow.clearLine()
+	textBoxWindow.setTextColor(tableInput[8])
+	textBoxWindow.write(tableInput[7])
+	textBoxWindow.setCursorPos(1,2)
+	textBoxWindow.setBackgroundColor(tableInput[12])
+	for i = 2 , tableInput[5] do
+		textBoxWindow.setCursorPos(1,i)
+		textBoxWindow.clearLine()
+	end
+	textBoxWindow.setTextColor(tableInput[11])
+	for token in string.gmatch(tableInput[10],"[^%%]+") do
+		nTable[#nTable+1] = token
+	end
+	for i,v in pairs(nTable) do
+		textBoxWindow.setCursorPos(2,1+i)
+		textBoxWindow.write(v)
+	end
+	textBoxWindow.setTextColor(tableInput[13])
+	textBoxWindow.setBackgroundColor(tableInput[14])
+	textBoxWindow.setCursorPos(2,tableInput[5]-1)
+	textBoxWindow.clearLine()
+	textBoxWindow.setCursorPos(2,tableInput[5]-1)
+	textBoxWindow.setTextColor(tableInput[13])
+	textBoxWindow.setBackgroundColor(tableInput[14])
+	if secret then
+		return read("*")
+	else
+		return read()
+	end
+end
+
+local function confDiag(tableInput)
+	local yn = textBox(tableInput,false,false)
+	while string.lower(yn) ~= "y" do
+		if string.lower(yn) == "n" then
+			return false
+		end
+		yn = textBox(tableInput,false,false)
+	end
+	return true
+end
+
+local function refresh(dir)
+	local bufferFiles = {}
+	for i,v in pairs(fs.list(dir)) do
+		if fs.isDir(currDir.."/"..v) then
+			bufferFiles[#bufferFiles+1] = {v,"folder"}
+		else
+			bufferFiles[#bufferFiles+1] = {v,"file"}
+		end
+	end
+	return bufferFiles
+end
+
+local function drawOptions(tableInputDrawOptions)
+	for i,v in pairs(tableInputDrawOptions) do
+		if not ((v[8] == "paste" and copyPath == "") or (v[8] == "up" and (currDir == "" or currDir == "/"))) then
+			term.setCursorPos(v[1],v[2])
+			paintutils.drawFilledBox(v[1],v[2],v[3]+v[1]-1,v[4]+v[2]-1,v[7])
+			term.setCursorPos(v[1],v[2])
+			term.setTextColor(v[6])
+			term.write(v[5])
+			if globalButtonList == nil then
+				globalButtonList = {{v[1],v[2],v[3]+v[1]-1,v[4]+v[2]-1,"button:"..v[8]}}
+			else
+				globalButtonList[#globalButtonList+1] = {v[1],v[2],v[3]+v[1]-1,v[4]+v[2]-1,"button:"..v[8]}
+			end
+		end
+	end
+end
+
+local function drawFiles(filesToDisplay)
+	local numItemsX = math.floor((w-1)/10)
+	numItemsY = math.ceil(#filesToDisplay/numItemsX)
+	local currFile = 1
+	for i = 0 , numItemsY-1 do
+		for k = 0 , numItemsX - 1 do
+			if currFile > #filesToDisplay then
+				break
+			else
+				term.setTextColor(colors.black)
+				if filesToDisplay[currFile][2] == "file" then
+					local icon
+					if (fs.isReadOnly(currDir .. "/" .. filesToDisplay[currFile][1])) then
+						icon = roFileIcon
+					else
+						icon = fileIcon
+					end
+					paintutils.drawImage(icon,(k*10)+2,(i*5)+4-scroll)
+					for l,m in pairs(mkStrShort(filesToDisplay[currFile][1],6,3)) do 
+						term.setCursorPos((k*10)+3,(i*5)+4+l-scroll)
+						term.write(m)
+					end
+					if ((i*5)+4-scroll) < 4 then
+						if ((i*5)+7-scroll) >= 4 then
+							if globalButtonList == nil then
+								globalButtonList = {{((k*10)+2),4,((k*10)+9),((i*5)+7-scroll),"file:"..filesToDisplay[currFile][1]}}
+							else
+								globalButtonList[#globalButtonList+1] = {((k*10)+2),4,((k*10)+9),((i*5)+7-scroll),"file:"..filesToDisplay[currFile][1]}
+							end
+						end
+					else
+						if globalButtonList == nil then
+							globalButtonList = {{((k*10)+2),((i*5)+4-scroll),((k*10)+9),((i*5)+7-scroll),"file:"..filesToDisplay[currFile][1]}}
+						else
+							globalButtonList[#globalButtonList+1] = {((k*10)+2),((i*5)+4-scroll),((k*10)+9),((i*5)+7-scroll),"file:"..filesToDisplay[currFile][1]}
+						end
+					end
+				elseif filesToDisplay[currFile][2] == "folder" then
+					paintutils.drawImage(folderIcon,(k*10)+2,(i*5)+4-scroll)
+					for l,m in pairs(mkStrShort(filesToDisplay[currFile][1],6,3)) do 
+						term.setCursorPos((k*10)+3,(i*5)+4+l-scroll)
+						term.write(m)
+					end
+					if ((i*5)+4-scroll) < 4 then
+						if ((i*5)+7-scroll) >= 4 then
+							if globalButtonList == nil then
+								globalButtonList = {{((k*10)+2),4,((k*10)+9),((i*5)+7-scroll),"folder:"..filesToDisplay[currFile][1]}}
+							else
+								globalButtonList[#globalButtonList+1] = {((k*10)+2),4,((k*10)+9),((i*5)+7-scroll),"folder:"..filesToDisplay[currFile][1]}
+							end
+						end
+					else
+						if globalButtonList == nil then
+							globalButtonList = {{((k*10)+2),((i*5)+4-scroll),((k*10)+9),((i*5)+7-scroll),"folder:"..filesToDisplay[currFile][1]}}
+						else
+							globalButtonList[#globalButtonList+1] = {((k*10)+2),((i*5)+4-scroll),((k*10)+9),((i*5)+7-scroll),"folder:"..filesToDisplay[currFile][1]}
+						end
+					end
+				end
+				currFile = currFile + 1
+			end
+		end
+	end
+end
+
+local function drawSideBar()
+	term.setTextColor(colors.black)
+	local lenghtSideBar = h-5
+	if numItemsY == 0 then
+		numItemsY = 1
+	end
+	lenghtSideBar = math.ceil(lenghtSideBar*lenghtSideBar/(numItemsY*5))
+	local aScroll = (h - 5 - lenghtSideBar) * scroll / (numItemsY*5)
+	
+	paintutils.drawLine(w,4+aScroll,w,4+lenghtSideBar+aScroll,colors.green)
+	term.setBackgroundColor(colors.blue)
+	term.setCursorPos(w,3)
+	term.write("^")
+	term.setCursorPos(w,h-1)
+	term.write("v")
+	if globalButtonList == nil then
+		globalButtonList = {{w,3,w,3,"button:scrollUp"}}
+	else
+		globalButtonList[#globalButtonList+1] = {w,3,w,3,"button:scrollUp"}
+	end
+	if globalButtonList == nil then
+		globalButtonList = {{w,h-1,w,h-1,"button:scrollDown"}}
+	else
+		globalButtonList[#globalButtonList+1] = {w,h-1,w,h-1,"button:scrollDown"}
+	end
+end
+
+local function program(extension)
+	if fileExtensions[extension] ~= nil then
+		return fileExtensions[extension]
+	else
+		return "edit"
+	end
+end
+
+local function main(filesToDisplay,buttonsToDisplay)
+	clear(colors.white)
+	drawFiles(filesToDisplay)
+	drawSideBar()
+	term.setBackgroundColor(colors.orange)
+	for i = 1,2 do
+		term.setCursorPos(1,i)
+		term.clearLine()
+	end
+	term.setCursorPos(1,1)
+	term.setTextColor(colors.black)
+	term.write("Creator's FileX v1.0 modded by EtK")
+	term.setCursorPos(w,1)
+	term.setBackgroundColor(colors.magenta)
+	term.write("X")
+	if globalButtonList == nil then
+		globalButtonList = {{w,1,w,1,"button:x"}}
+	else
+		globalButtonList[#globalButtonList+1] = {w,1,w,1,"button:x"}
+	end
+	if globalButtonList == nil then
+		globalButtonList = {{1,3,w,h,"nil:nil"}}
+	else
+		globalButtonList[#globalButtonList+1] = {1,4,w,h,"nil:nil"}
+	end
+	drawOptions(buttonsToDisplay)
+	if globalButtonList == nil then
+		globalButtonList = {{1,1,w,3,"nil:nilnil"}}
+	else
+		globalButtonList[#globalButtonList+1] = {1,1,w,3,"nil:nilnil"}
+	end
+	term.setCursorPos(1,h)
+	term.setBackgroundColor(colors.orange)
+	term.clearLine()
+	term.setTextColor(colors.black)
+	term.write(currDir)
+	term.setCursorPos(1,1)
+	local detectedButtonUnparsedTable = detectButtonHit(globalButtonList)
+	local detectedButtonUnparsed = detectedButtonUnparsedTable[1]
+	local button = detectedButtonUnparsedTable[2]
+	local detectedButtonParsedTable = {}
+	for token in string.gmatch(detectedButtonUnparsed,"[^:]+") do
+		detectedButtonParsedTable[#detectedButtonParsedTable + 1] = token
+	end
+	local action = detectedButtonParsedTable[2]
+	if detectedButtonParsedTable[1] == "button" then
+		if action == "x" then
+			clear(colors.black, true)
+			notEnded = false
+		elseif action == "up" then
+			scroll = 0
+			if currDir ~= "/" then
+				local currDirBuffer = {}
+				for token in string.gmatch(currDir,"(/[^/]+)") do
+					currDirBuffer[#currDirBuffer + 1] = token
+				end
+				currDir = ""
+				if #currDirBuffer == 1 then
+					currDir = ""
+				else
+					for i = 1, #currDirBuffer-1 do
+						if i == 1 then
+							currDir = currDirBuffer[1]
+						else
+							currDir = currDir..currDirBuffer[i]
+						end
+					end
+				end
+				files = refresh(currDir)
+			end
+		elseif action == "refresh" then
+			files = refresh(currDir)
+		elseif action == "scrollUp" then
+			scroll = scroll - 1
+			if scroll < 0 then
+				scroll = 0
+			end
+		elseif action == "scrollDown" then
+			scroll = scroll + 1
+			if scroll > numItemsY*5 - h + 3 then
+				scroll = scroll - 1
+			end
+		elseif action == "paste" then
+			fs.copy(copyPath, currDir.."/"..copyHelp)
+			files = refresh(currDir)
+			
+		end
+	elseif detectedButtonParsedTable[1] == "key" then
+		if tonumber(action) == keys.up then
+			scroll = scroll - 1
+			if scroll < 0 then
+				scroll = 0
+			end
+		elseif tonumber(action) == keys.down then
+			scroll = scroll + 1
+			if scroll > numItemsY*6 - h then
+				scroll = scroll - 1
+			end
+		end
+	elseif detectedButtonParsedTable[1] == "folder" then
+		if button == 1 then
+			currDir = currDir.."/"..action
+			files = refresh(currDir)
+			scroll = 0
+		elseif button == 2 then
+			local result = dropDownMenu(folderMenu,false,detectedButtonUnparsedTable[3],detectedButtonUnparsedTable[4])
+			if result == "open" then
+				currDir = currDir.."/"..action
+				files = refresh(currDir)
+			elseif result == "copy" then
+				pathToCopy = currDir..action
+			elseif result == "delete" then
+				fs.delete(currDir.."/"..action)
+				files = refresh(currDir)
+			elseif result == "rename" then
+				local answ = textBox(newFolderWindow,false,false)
+				fs.move(currDir.."/"..action,currDir.."/"..answ)
+				files = refresh(currDir)
+			elseif result == "move" then
+				local answ = textBox(moveFolderWindow,false,false)
+				if string.sub(answ,1,1) ~= "/" then
+					answ = "/"..answ
+				end
+				fs.move(currDir.."/"..action,answ)
+				files = refresh(currDir)
+			elseif result == "copy" then
+				copyPath = currDir.."/"..action
+				copyHelp = action
+			end
+		end
+	elseif detectedButtonParsedTable[1] == "file" then
+		if button == 1 then
+			local fileExtension
+			for token in string.gmatch(action,"[^%.]+") do
+				fileExtension = token
+			end
+			if fileExtension == action then
+				fileExtension = "txt"
+			end
+			local programT = program(fileExtension)
+			clear(colors.black,true)
+			shell.run(shell.resolveProgram(programT)..' "'..currDir.."/"..action..'"')
+		elseif button == 2 then
+			local result = dropDownMenu(fileMenu,false,detectedButtonUnparsedTable[3],detectedButtonUnparsedTable[4])
+			if result == "open" then
+				local fileExtension
+				for token in string.gmatch(action,"[^%.]+") do
+					fileExtension = token
+				end
+				if fileExtension == action then
+					fileExtension = "txt"
+				end
+				clear(colors.black,true)
+				local programT = program(fileExtension)
+				shell.run(shell.resolveProgram(programT).." "..currDir.."/"..action)
+			elseif result == "delete" then
+				fs.delete(currDir.."/"..action)
+				files = refresh(currDir)
+			elseif result == "rename" then
+				local answ = textBox(newFolderWindow,false,false)
+				fs.move(currDir.."/"..action,currDir.."/"..answ)
+				files = refresh(currDir)
+			elseif result == "move" then
+				local answ = textBox(moveFolderWindow,false,false)
+				if string.sub(answ,1,1) ~= "/" then
+					answ = "/"..answ
+				end
+				fs.move(currDir.."/"..action,answ)
+				files = refresh(currDir)
+			elseif result == "run" then
+				clear(colors.black,true)
+				shell.run(shell.resolveProgram("shell"),currDir.."/"..action)
+			elseif result == "openWith" then
+				local possibleExtensions = {}
+				for i,v in pairs(fileExtensions) do
+					local alreadyRegistered = false
+					for m,k in pairs(possibleExtensions) do
+						if v == k then
+							alreadyRegistered = true
+						end
+					end
+					if not alreadyRegistered then
+						possibleExtensions[#possibleExtensions+1] = v
+					end
+				end
+				local openWith = {
+					term.current(),
+					16,
+					"Open with:",
+					colors.white,
+					colors.blue,
+					colors.black,
+					colors.lightGray,
+					{}
+				}
+				for i,v in pairs(possibleExtensions) do
+					openWith[8][#openWith[8]+1] = {v,v}
+				end
+				openWith[8][#openWith[8]+1] = {"Cancel","cancel"}
+				globalButtonList = {}
+				result = dropDownMenu(openWith,false,detectedButtonUnparsedTable[3],detectedButtonUnparsedTable[4]+6)
+				clear(colors.black,true)
+				shell.run(shell.resolveProgram(result),currDir.."/"..action)
+			elseif result == "copy" then
+				copyPath = currDir.."/"..action
+				copyHelp = action
+			end
+		end
+	elseif detectedButtonParsedTable[1] == "nil" then
+		if button == 2 then
+			if action == "nil" then
+				local result = dropDownMenu(nilMenu,false,detectedButtonUnparsedTable[3],detectedButtonUnparsedTable[4])
+				if result == "makeFolder" then
+					local answ = textBox(newFolderWindow,false,false)
+					if fs.isDir(currDir.."/"..answ) and not dialogBox(newExists,false) then
+						return
+					end
+					fs.makeDir(currDir.."/"..answ)
+					files = refresh(currDir)
+					scroll = 0
+				elseif result == "makeFile" then
+					local answ = textBox(newFileWindow,false,false)
+					if fs.exists(currDir.."/"..answ) and not fs.isDir(currDir.."/"..answ) and not dialogBox(newExists,false) then
+						return
+					end
+					f = fs.open(currDir.."/"..answ,"w")
+					f.close()
+					files = refresh(currDir)
+					scroll = 0
+				end
+			end
+		end
+	end
+end
+
+--Code--
+
+clear()
+
+-- remove non-existent programs from "open with"
+local t = {}
+for k,v in pairs(fileExtensions) do
+	if not shell.resolveProgram(v) then
+		t[#t+1]=k
+	end
+end
+for i=1,#t do
+	fileExtensions[t[i]]=nil
+end
+t=nil
+
+-- set startup dir to argumet or current shell directory
+local tArgs = { ... }
+if #tArgs > 0 then
+	local cd = table.concat(tArgs, " ")
+	if shell.resolve(cd) and fs.exists(cd) then
+		currDir = shell.resolve(cd)
+	end
+end
+tArgs = nil
+if currDir == "" and fs.exists(shell.dir()) then
+	currDir = shell.dir()
+end
+
+files = refresh(currDir)
+while notEnded do
+	local ok,res=pcall(main,files,Buttons)
+	if not ok then
+		errorWindow[10]=res--TODO: break message into lines every few characters to prevent overflow
+		dialogBox(errorWindow)
+	end
+end

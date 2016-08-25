@@ -1,0 +1,10 @@
+-- TODO: try to support "echo."
+local tArgs = { ... }
+
+for i=1, #tArgs do
+	write(tArgs[i])
+	if i < #tArgs then
+		write(" ")
+	end
+end
+write("\n")

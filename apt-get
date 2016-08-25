@@ -1,0 +1,258 @@
+local tArgs = { ... }
+
+local function loadAsTable()
+	local repo, curR, curM = {}
+	for line in io.lines("osData/cfg/modules") do
+		if string.starts(line, "\t\t") then
+			local v = string.explode(string.sub(line, 3, string.len(line)), "=") -- should only produce string[2]
+			repo[curR][curM][v[1]] = v[2]
+		elseif string.starts(line, "\t") then -- found a module definition
+			curM = string.sub(line, 2, string.len(line))
+			repo[curR][curM] = {}
+		else -- found a repo definition
+			curR = line
+			repo[line] = {}
+		end
+	end
+	return repo
+end
+
+local function getInstalled()
+	local repo, curR, curM = {}
+	for line in io.lines("osData/cfg/progs") do
+		if string.starts(line, "\t\t") then
+			local v = string.explode(string.sub(line, 3, string.len(line)), "=") -- should only produce string[2]
+			repo[curR][curM][v[1]] = v[2]
+		elseif string.starts(line, "\t") then -- found a module definition
+			curM = string.sub(line, 2, string.len(line))
+			repo[curR][curM] = {}
+		else -- found a repo definition
+			curR = line
+			repo[line] = {}
+		end
+	end
+	return repo
+end
+
+-- TODO: maybe alphebeticalize the data
+local function saveProgs(progs)
+	local file = fs.open("osData/cfg/progs", "w")
+	for k, arr in pairs(progs) do
+		file.write(k .. "\n")
+		for mod, data in pairs(arr) do
+			file.write("\t" .. mod .. "\n")
+			for key, v in pairs(data) do
+				file.write("\t\t" .. key .. "=" .. v .. "\n")
+			end
+		end
+	end
+	file.close()
+end
+
+if #tArgs == 0 or string.lower(tArgs[1]) == 'help' then
+	term.writeColored("usage: apt-get <cmd> [arg]\n", colors.orange)
+	term.writeColored("  check for updates:\n", colors.orange)
+	term.writeColored("    apt-get update\n", colors.orange)
+	term.writeColored("  install updates:\n", colors.orange)
+	term.writeColored("    apt-get upgrade\n", colors.orange)
+	term.writeColored("  install a program:\n", colors.orange)
+	term.writeColored("    apt-get install <program>\n", colors.orange)
+	term.writeColored("  remove a program:\n", colors.orange)
+	term.writeColored("    apt-get remove <program>\n", colors.orange)
+elseif string.lower(tArgs[1]) == 'install' then
+	if #tArgs == 1 then
+		term.writeColored("usage: apt-get install <program>\n", colors.orange)
+		return
+	end
+	ok, res = os.doAsAdmin(function()
+			local repo, installed, add, amount = loadAsTable(), getInstalled(), {}, 0
+			for i=2,#tArgs do
+				if add[tArgs[i]] == nil then -- don't count something twice
+					local has = false
+					for k, v in pairs(installed) do
+						if v[tArgs[i]] then
+							term.writeColored(tArgs[i] .. " already installed!\n", colors.red)
+							has = true
+							break
+						end
+					end
+					if not has then
+						for k, v in pairs(repo) do
+							if v[tArgs[i]] then
+								if add[tArgs[i]] ~= nil then
+									term.writeColored("ambiguity with " .. tArgs[i] .. "!\n", colors.red)
+									add[tArgs[i]] = nil
+									amount = amount - 1
+									break
+								else
+									add[tArgs[i]] = k
+									amount = amount + 1
+								end
+							end
+						end
+					end
+				end
+			end
+			
+			if amount > 0 then
+				local i = 0
+				term.writeColored("install " .. amount .. " programs? [Y/n] ", colors.yellow)
+				if term.YN() then
+					for k, v in pairs(add) do
+						i = i + 1
+						local url = string.gsub(string.gsub(v, "$name", k), "$ver", repo[v][k]["ver"])
+						term.writeColored("downloading " .. i .. "/" .. amount, colors.cyan)
+						local ok, res = os.try(http.download, url, "osData/tmp/apt/" .. url)
+						if ok then
+							fs.replace("osData/tmp/apt/" .. url, "osData/bin/" .. k)
+							term.writeColored(" done\n", colors.green)
+							installed[v][k] = repo[v][k]
+						else
+							term.writeColored("\nCouldn't update " .. arr[i] .. "\n", colors.red)
+							term.writeColored(res .. "\n", colors.red)
+						end
+					end
+					saveProgs(installed)
+				end
+			else
+				term.writeColored("nothing to install...\n", colors.yellow)
+			end
+		end)
+elseif string.lower(tArgs[1]) == 'remove' then
+	if #tArgs == 1 then
+		term.writeColored("usage: apt-get remove <program>\n", colors.orange)
+		return
+	end
+	ok, res = os.doAsAdmin(function()
+			local installed, rem, amount = getInstalled(), {}, 0
+			for i=2,#tArgs do
+				if tArgs[i] == "apt-get" or tArgs[i] == "cmd" then
+					term.writeColored("cannot remove " .. tArgs[i] .. "!\n", colors.red)
+				elseif rem[tArgs[i]] == nil then -- don't count something twice
+					for k, v in pairs(installed) do
+						if v[tArgs[i]] then
+							rem[tArgs[i]] = k
+							amount = amount + 1
+							break
+						end
+					end
+				end
+			end
+			
+			if amount > 0 then
+				term.writeColored("remove " .. amount .. " programs? [Y/n] ", colors.yellow)
+				if term.YN() then
+					for k, v in pairs(rem) do
+						fs.delete("osData/bin/" .. k)
+						installed[v][k] = nil
+					end
+					saveProgs(installed)
+				end
+			else
+				term.writeColored("nothing to remove...\n", colors.yellow)
+			end
+		end)
+elseif string.lower(tArgs[1]) == 'update' then
+	os.doAsAdmin(function()
+			local file = fs.open("osData/cfg/modules", "w")
+			for line in io.lines("osData/cfg/sources") do -- <os cfg folder>/sources
+				term.writeColored(line .. " ", colors.orange)
+				local ok, res = os.try(http.download, line, "osData/tmp/apt/" .. line)
+				if ok then
+					term.writeColored("HIT\n", colors.green)
+					local fine, base, form = true
+					for l in io.lines("osData/tmp/apt/" .. line) do
+						if not string.starts(l, "#") then -- ignore comments
+							if fine then
+								if string.starts(l, '[basepath]=') then
+									base = string.sub(l, 12, string.len(l))
+									file.write(base .. "\n")
+								elseif string.starts(l, '[format]=') then
+									form = string.explode(string.sub(l, 10, string.len(l)), ",")
+									for i=1, #form do
+										if not fine or not string.starts(form[i], "$") then
+											fine = false
+										else
+											form[i] = string.sub(form[i], 2, string.len(form[i]))
+										end
+									end
+								else
+									if base and form then
+										local mod = string.explode(l, ",")
+										for i=#mod, 1, -1 do
+											mod[form[i]] = mod[i]
+											table.remove(mod, i)
+										end
+										file.write("\t" .. mod["name"] .. "\n")
+										for k,v in pairs(mod) do
+											if k ~= "name" then
+												file.write("\t\t" .. k .. "=" .. v .. "\n")
+											end
+										end
+									else
+										fine = false
+									end
+								end
+							end
+						end
+					end
+					if not fine then
+						term.writeColored("Invalid index!\n", colors.red)
+					end
+					fs.delete("osData/tmp/apt/" .. line) -- take up less space
+				else
+					term.writeColored("MISS\n", colors.red)
+				end
+			end
+			file.close()
+			fs.delete("osData/tmp/apt")
+		end)
+elseif string.lower(tArgs[1]) == 'upgrade' then
+	ok, res = os.doAsAdmin(function()
+			local repo, installed, updates = loadAsTable(), getInstalled(), {}
+			for k, mod in pairs(repo) do
+				if installed[k] then -- something from that repo is installed
+					for name, var in pairs(mod) do
+						if installed[k][name] then -- the package is installed
+							if tonumber(var["ver"]) > tonumber(installed[k][name]["ver"]) then
+								if not updates[k] then
+									updates[k] = {}
+								end
+								updates[k][#updates[k] + 1] = { name, var["ver"] } -- create a list of updates
+							end
+						end
+					end
+				end
+			end
+			local u = 0
+			for k, v in pairs(updates) do
+				u = u + 1
+			end
+			if u < 1 then
+				term.writeColored("No updates found!\n", colors.green)
+			else
+				term.writeColored(tostring(u) .. " update(s) found!\n", colors.orange)
+				term.writeColored("Update [Y/n]? ", colors.orange)
+				if term.YN() then
+					for k, arr in pairs(updates) do
+						for i=1, #arr do
+							local url = string.gsub(string.gsub(k, "$name", arr[i][1]), "$ver", arr[i][2])
+						term.writeColored("downloading " .. i .. "/" .. #arr, colors.cyan)
+							local ok, res = os.try(http.download, url, "osData/tmp/apt/" .. url)
+							if ok then
+								fs.replace("osData/tmp/apt/" .. url, "osData/bin/" .. arr[i][1])
+								term.writeColored(" done\n", colors.green)
+								installed[k][arr[1][1]]["ver"] = repo[k][arr[1][1]]["ver"]
+							else
+								term.writeColored("\nCouldn't update " .. arr[i] .. "\n", colors.red)
+								term.writeColored(res .. "\n", colors.red)
+							end
+						end
+					end
+					
+					saveProgs(installed)
+					fs.delete("osData/tmp/apt")
+				end
+			end
+		end)
+end

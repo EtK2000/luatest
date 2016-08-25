@@ -1,0 +1,59 @@
+function printUsage()
+	local bg = term.getBackgroundColor()
+	local fg = term.getTextColor()
+	write("Sets the console foreground and background colors.\n")
+	write("color [attr]\n")
+	write("\n")
+	write("Color attributes are specified by TWO hex digits\n")
+	write("-- #1 is the background and #2 is the foreground\n")
+	write("Each digit can be any of the following:\n")
+	write("\n")
+	write("0 = White      8 = Light Gray\n")
+	write("1 = Orange     9 = Cyan\n")
+	write("2 = Magenta    A = Purple\n")
+	write("3 = Light Blue B = Blue\n")
+	write("4 = Yellow     C = Brown\n")
+	write("5 = Lime       D = Green\n")
+	write("6 = Pink       E = Red\n")
+	write("7 = Gray       F = Black\n")
+	write("\nExample: \"color 0e\" produces \n")
+	term.setBackgroundColor(colors.asColor("0"))
+	term.setTextColor(colors.asColor("e"))
+	write("red on white\n")
+	term.setBackgroundColor(bg)
+	term.setTextColor(fg)
+	term.clearLine()
+end
+
+local tArgs = { ... }
+
+function doIt()
+	if #tArgs ~= 1 then
+		printUsage()
+	else
+		if string.len(tArgs[1]) > 2 then
+			printUsage()
+		elseif string.len(tArgs[1]) == 2 then
+			local bg = colors.asColor(string.sub(tArgs[1], 1, 1))
+			local fg = colors.asColor(string.sub(tArgs[1], 2, 2))
+			if bg == fg then
+				term.writeColored("Background and text cannot have the same color!\n", colors.red)
+			else
+				term.setBackgroundColor(bg)
+				term.setTextColor(fg)
+			end
+		else
+			local fg = colors.asColor(tArgs[1])
+			if fg == term.getBackgroundColor() then
+				term.writeColored("Background and text cannot have the same color!\n", colors.red)
+			else
+				term.setTextColor(fg)
+			end
+		end
+	end
+end
+
+local ok, val = pcall(doIt)
+if not ok then
+	printUsage()
+end

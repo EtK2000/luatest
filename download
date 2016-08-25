@@ -1,0 +1,12 @@
+local tArgs = { ... }
+
+if #tArgs == 2 then
+	local ok, res = os.try(http.download, tArgs[1], tArgs[2])
+	if ok then
+		term.writeColored("Download successful!\n", colors.green)
+	else
+		term.writeColored("Download failed!\n", colors.red)
+	end
+else
+	term.writeColored("usage: download <url> <file>\n", colors.orange)
+end

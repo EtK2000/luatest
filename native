@@ -1,0 +1,302 @@
+-- this is like a .dll or .so file, as it defines all the functions
+
+function os.readOnly(t)
+	local proxy = {}
+	local mt = { -- create a meta-table
+		__index = t,
+		__newindex = function (t,k,v)
+				error("Attempt to update a read-only table", 2)
+			end
+	}
+	setmetatable(proxy, mt)
+	return proxy
+end
+
+local colorNumberMap = os.readOnly({
+	['0'] = colors.white,
+	['1'] = colors.orange,
+	['2'] = colors.magenta,
+	['3'] = colors.lightBlue,
+	['4'] = colors.yellow,
+	['5'] = colors.lime,
+	['6'] = colors.pink,
+	['7'] = colors.gray,
+	['8'] = colors.lightGray,
+	['9'] = colors.cyan,
+	['a'] = colors.purple,
+	['b'] = colors.blue,
+	['c'] = colors.brown,
+	['d'] = colors.green,
+	['e'] = colors.red,
+	['f'] = colors.black
+})
+
+local colorWordMap = os.readOnly({
+	['white'] = colors.white,
+	['orange'] = colors.orange,
+	['magenta'] = colors.magenta,
+	['lightBlue'] = colors.lightBlue,
+	['yellow'] = colors.yellow,
+	['lime'] = colors.lime,
+	['pink'] = colors.pink,
+	['gray'] = colors.gray,
+	['lightGray'] = colors.lightGray,
+	['cyan'] = colors.cyan,
+	['purple'] = colors.purple,
+	['blue'] = colors.blue,
+	['brown'] = colors.brown,
+	['green'] = colors.green,
+	['red'] = colors.red,
+	['black'] = colors.black
+})
+
+function colors.asColor(str)
+	local s = string.lower(str)
+	local res = colorNumberMap[s]
+	if res == nil then
+		res = colorWordMap[s]
+		if res == nil then
+			error("Invalid color: " .. str, 2)
+		end
+	end
+	return res
+end
+
+function http.download(url, file)
+	local req = http.get(url)
+	if not req then
+		error("Could not reach " .. url, 2)
+	end
+	local content = req.readAll()
+	if not content then
+		error("Could not connect to " .. url)
+	end
+	f = fs.open(file, "w")
+	f.write(content)
+	f.close()
+end
+
+function string.asBoolean(str)
+	if string.lower(str) == 'yes' or string.lower(str) == 'y' or string.lower(str) == 'true' or string.lower(str) == 't' or str == '1' then
+		return true
+	elseif string.lower(str) == 'no' or string.lower(str) == 'n' or string.lower(str) == 'false' or string.lower(str) == 'f' or str == '0' then
+		return false
+	else
+		error("Invalid boolean", 2)
+	end
+end
+
+function string.explode(str, div)
+	if (div == '') then
+		return false
+	end
+	local pos, res = 0, {}
+	-- for each divider found
+	for st,sp in function() return string.find(str, div, pos, true) end do
+		res[#res + 1] =  string.sub(str, pos, st - 1) -- Attach chars left of current divider
+		pos = sp + 1 -- Jump past current divider
+	end
+	res[#res + 1] = string.sub(str, pos) -- Attach chars right of last divider
+	return res
+end
+
+function string.starts(String, Start)
+   return string.sub(String, 1, string.len(Start)) == Start
+end
+
+local sb = term.setBackgroundColor
+local sf = term.setTextColor
+local curb
+local curf
+
+if term.isColor() then
+	curb = colors.black
+	curf = colors.white
+end
+
+function term.setBackgroundColor(col)
+  sb(col)
+  curb = col
+end
+
+function term.setTextColor(col)
+  sf(col)
+  curf = col
+end
+
+function term.getBackgroundColor()
+  return curb
+end
+
+function term.getTextColor()
+  return curf
+end
+
+function term.YN()
+	while true do
+		local x, y = term.getCursorPos()
+		local r = read()
+		local ok, r = os.try(string.asBoolean, r)
+		if ok then
+			return r
+		end
+		term.setCursorPos(x, y)
+		for i=1, string.len(r) do
+			write(' ')
+		end
+		term.setCursorPos(x, y)
+	end
+end
+
+function term.writeColored(text, fgc, bgc)
+	if term.isColor() then
+		local bg = term.getBackgroundColor()
+		local fg = term.getTextColor()
+		if bgc ~= nil then
+			term.setBackgroundColor(bgc)
+		end
+		term.setTextColor(fgc)
+		write(text)
+		if bgc ~= nil then
+			term.setBackgroundColor(bg)
+		end
+		term.setTextColor(fg)
+	else
+		write(text)
+	end
+end
+
+-- term.clear() already exists
+function os.clear()
+	term.clear()
+	term.setCursorPos(1, 1)
+end
+
+function os.loading(color, func) -- func is a function that returns a boolean (that is all), true means stop
+	local anim = { '|', '/', '-', '\\' }
+	local i = 1;
+	local x, y = term.getCursorPos()
+	while (func ~= nil and not func()) or true do
+		local x1, y1 = term.getCursorPos()
+		term.setCursorPos(x, y)
+		term.writeColored(anim[i], color ~= nil and color or term.getTextColor())
+		if x1 ~= x and y1 ~= y then
+			term.setCursorPos(x1, y1)
+		end
+		i = i + 1
+		if i > 4 then
+			i = 1
+		end
+		sleep(0.1)
+	end
+end
+
+function os.pause()
+	write("Press any key to continue")
+	os.pullEvent("key")
+end
+
+function os.spinner(color, func)
+	local anim = {{
+		"   O      ",
+		" O      O ",
+		"O        O",
+		"O        O",
+		" O      O ",
+		"   O  O   "
+	}, {
+		"   O  O   ",
+		" O        ",
+		"O        O",
+		"O        O",
+		" O      O ",
+		"   O  O   "
+	}, {
+		"   O  O   ",
+		" O      O ",
+		"O         ",
+		"O        O",
+		" O      O ",
+		"   O  O   "
+	}, {
+		"   O  O   ",
+		" O      O ",
+		"O        O",
+		"O         ",
+		" O      O ",
+		"   O  O   "
+	}, {
+		"   O  O   ",
+		" O      O ",
+		"O        O",
+		"O        O",
+		" O        ",
+		"   O  O   "
+	}, {
+		"   O  O   ",
+		" O      O ",
+		"O        O",
+		"O        O",
+		" O      O ",
+		"   O      "
+	}, {
+		"   O  O   ",
+		" O      O ",
+		"O        O",
+		"O        O",
+		" O      O ",
+		"      O   "
+	}, {
+		"   O  O   ",
+		" O      O ",
+		"O        O",
+		"O        O",
+		"        O ",
+		"   O  O   "
+	}, {
+		"   O  O   ",
+		" O      O ",
+		"O        O",
+		"         O",
+		" O      O ",
+		"   O  O   "
+	}, {
+		"   O  O   ",
+		" O      O ",
+		"         O",
+		"O        O",
+		" O      O ",
+		"   O  O   "
+	}, {
+		"   O  O   ",
+		"        O ",
+		"O        O",
+		"O        O",
+		" O      O ",
+		"   O  O   "
+	}, {
+		"      O   ",
+		" O      O ",
+		"O        O",
+		"O        O",
+		" O      O ",
+		"   O  O   "
+	}}
+	local frame = 1
+	local sw, sh = string.len(anim[1][1]), #anim[1]
+	while true do
+		for i=1,sh do
+			term.setCursorPos(math.ceil(w / 2 - sw / 2), math.ceil(h / 2) - sh / 2 + i - 1)
+			term.writeColored(anim[frame][i], color ~= nil and color or term.getTextColor())
+		end
+		frame = frame + 1
+		if frame > #anim then
+			frame = 1
+		end
+		sleep(0.075)
+	end
+end
+
+function os.try(func, ...)
+	return pcall(func, ...)
+end
