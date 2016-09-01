@@ -1,0 +1,23 @@
+local tArgs = { ... }
+
+if #tArgs ~= 1 or string.lower(tArgs[1]) == 'help' then
+	term.writeColored("usage: add-apt-repository <repo>\n", colors.orange)
+else
+	local ok, res = os.doAsAdmin(function()
+			for line in io.lines("osData/cfg/sources") do -- <os cfg folder>/sources
+				if line == tArgs[1] then
+					term.writeColored("you already added that repo!\n", colors.red)
+					return
+				end
+			end
+			
+			local file = io.open("osData/cfg/sources", "a")
+			file.write(tArgs[1] .. "\n")
+			file.close()
+			
+			term.writeColored("repo added, please run apt-get update!\n", colors.green)
+		end)
+	if not ok then
+		term.writeColored("failed to add repo: " .. res, colors.red)
+	end
+end

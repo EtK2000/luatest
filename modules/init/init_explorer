@@ -1,0 +1,1 @@
+shell.setCompletionFunction(osDir['bin'] .. "/explorer", os.completeDir)

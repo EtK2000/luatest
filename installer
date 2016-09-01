@@ -567,7 +567,7 @@ local function downloadOS() -- download OS core
 	downOS = false
 end
 
-local moduleNames, modules = { "apt-get", "cmd", "config", "explorer", "su", "sudo" }, {}
+local moduleNames, modules = { "add-apt-repository", "apt-get", "cmd", "config", "explorer", "su", "sudo" }, {}
 local function downloadModule(moduleName)
 	local url = modules["|base"]:gsub("%$name", moduleName)
 	local downloaded
@@ -953,6 +953,7 @@ local ok, res = os.try(
 											-- install required packages
 											fs.replaceCopy(cache .. "/startup", "startup")
 											fs.replaceCopy(cache .. "/native", "osData/native")
+											fs.replaceCopy(cache .. "/add-apt-repository", "osData/bin/add-apt-repository")
 											fs.replaceCopy(cache .. "/apt-get", "osData/bin/apt-get")
 											fs.replaceCopy(cache .. "/cmd", "osData/bin/cmd")
 											fs.replaceCopy(cache .. "/config", "osData/bin/config")

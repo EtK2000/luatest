@@ -1,0 +1,31 @@
+local cs = {}
+
+for k, v in pairs(colors) do
+	if type(v) == "number" then
+		table.insert(cs, k)
+	end
+end
+
+shell.setCompletionFunction(osDir['bin'] .. "/config",
+	function(shell, nIndex, sText, tPreviousText)
+		local res, results = {}, {}
+		if nIndex == 1 then
+			res = { "animate", "desktop", "require_pass", "update" }
+		elseif nIndex == 2 then
+			local t = {
+				['animate'] = { "false", "true" },
+				['desktop'] = cs,
+				['require_pass'] = { "false", "true" },
+				['update'] = { "false", "true" }
+			}
+			res = t[tPreviousText[#tPreviousText]]
+		end
+		
+		for _, word in pairs(res) do
+			if word:sub(1, #sText) == sText then
+				results[#results + 1] = word:sub(#sText + 1)
+			end
+		end
+		
+		return results
+	end)

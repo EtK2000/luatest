@@ -106,9 +106,12 @@ elseif string.lower(tArgs[1]) == 'install' then
 						if ok then
 							fs.replace("osData/tmp/apt/" .. url, "osData/bin/" .. k)
 							term.writeColored(" done\n", colors.green)
+							if installed[v] == nil then
+								installed[v] = {}
+							end
 							installed[v][k] = repo[v][k]
 						else
-							term.writeColored("\nCouldn't update " .. arr[i] .. "\n", colors.red)
+							term.writeColored("\nCouldn't install '" .. k .. "'\n", colors.red)
 							term.writeColored(res .. "\n", colors.red)
 						end
 					end
@@ -118,6 +121,9 @@ elseif string.lower(tArgs[1]) == 'install' then
 				term.writeColored("nothing to install...\n", colors.yellow)
 			end
 		end)
+		if not ok then
+			print(res)
+		end
 elseif string.lower(tArgs[1]) == 'remove' then
 	if #tArgs == 1 then
 		term.writeColored("usage: apt-get remove <program>\n", colors.orange)

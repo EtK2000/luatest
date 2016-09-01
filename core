@@ -5,7 +5,7 @@ os.pullEvent = os.pullEventRaw
 local perm = 0 -- permission level (0: not logged in, 1: guest, 2: user, 3: super)
 local displayName
 local hiddenFiles = { "startup" } -- files hidden by OS
-local hiddenFolders = { "osData" } -- folders hidden by OS, child folders AREN'T hidden (for access to bin and cfg)
+local hiddenFolders = { "osData" } -- folders hidden by OS, child folders AREN'T hidden (for access to osDir['bin'] and osDir['cfg'])
 local native = {}
 local loading = true
 
@@ -19,9 +19,6 @@ local maxUsername, maxPassword = 10, 10
 -- 1 ***** User's Renamed File, Named To Be Hidden
 local userStartup = "1userStartupURFNTOBH" -- the name given to the renamed "startup"
 local usersFile = "osData/crd" -- the file containing the users' credentials, is would be awesome to encode this
-local bin = "osData/bin"
-local cfg = "osData/cfg"
-local tmp = "osData/tmp"
 
 ----------------------
 -- load native junk --
@@ -29,47 +26,35 @@ local tmp = "osData/tmp"
 
 os.loadAPI("osData/native")
 
+osDir = os.readOnly({
+	['bin'] = "osData/bin", -- the os src dir
+	['cfg'] = "osData/cfg", -- the config dir
+	['tmp'] = "osData/tmp" -- the tmp dir
+})
+
 ----------------------
 --   shell  setup   --
 ----------------------
 
-local function completeDir(shell, nIndex, sText, tPreviousText)
+function os.completeDir(shell, nIndex, sText, tPreviousText)
     if nIndex == 1 then
         return fs.complete(sText, shell.dir(), false, true)
     end
 end
 
-local function completeConfig(shell, nIndex, sText, tPreviousText)
-	local res, results = {}, {}
-    if nIndex == 1 then
-        res = { "animate", "desktop", "require_pass", "update" }
-    elseif nIndex == 2 then
-		local t = {
-			['animate'] = { "false", "true" },
-			['desktop'] = {},
-			['require_pass'] = { "false", "true" },
-			['update'] = { "false", "true" }
-		}
-		res = t[tPreviousText[#tPreviousText]]
-    end
-	
-	for _, word in pairs(res) do
-		if word:sub(1, #sText) == sText then
-			results[#results + 1] = word:sub(#sText + 1)
-		end
-	end
-	
-	return results
+for i, v in ipairs(fs.list(shell.resolve("osData/init.d"))) do
+	print("running " .. v)
+	shell.run("osData/init.d/" .. v)
 end
 
-shell.run(bin .. "/cmd", "nil")
-shell.setPath(shell.path() .. ":/" .. bin)
+os.pause()
+
+shell.run(osDir['bin'] .. "/cmd", "nil")
+shell.setPath(shell.path() .. ":/" .. osDir['bin'])
 shell.setAlias("cls", "clear")
 shell.setAlias("shell", "cmd")
 shell.setAlias("del", "delete")
 shell.setAlias("ren", "rename")
-shell.setCompletionFunction(bin .. "/config", completeConfig)
-shell.setCompletionFunction(bin .. "/explorer", completeDir)
 
 local URL = os.readOnly({
 	['core'] = "http://cc.etk2000.com/alb%C3%BFno/src/core", -- the startup file
@@ -94,7 +79,6 @@ local function NewPeripheral(type, peripheral)
     return setmetatable( obj, periph )
 end
 
-
 -- cache
 local w, h = term.getSize()
 local sides = { "back", "bottom", "front", "left", "right", "top" }
@@ -104,12 +88,12 @@ local peri = {}
 local config = {
 	['animate'] = true, -- do animations? (only available on colored computers)
 	['desktop'] = colors.yellow, -- desktop color (only available on colored computers)
-	['require_pass'] = true, -- require admin password for admin actions (if logged in as admin)
+	['require_pass'] = true, -- request password for admin actions? (if logged in as admin)
 	['update'] = true -- check for updates?
 }
 
 function os.getConfig(K)
-	if type(K) ~= 'string' then
+	if type(K) ~= "string" then
 		error("Expected string", 2)
 	end
 	return config[K]
@@ -147,7 +131,7 @@ function os.setConfig(K, V)
 		end
 	end
 	-- you only get here if no errors accord
-	local file = native.open(cfg .. "/cfg", "w")
+	local file = native.open(osDir['cfg'] .. "/cfg", "w")
 	for k,v in pairs(config) do
 		file.write(k .. "=" .. tostring(v) .. "\n")
 	end
@@ -380,7 +364,7 @@ local function oIoOpen(path, mode)
 	end
 	if isHidden(path) == true then
 		return
-	elseif string.starts(string.lower(path), string.lower(cfg) .. "/") or string.starts(string.lower(path), string.lower(tmp) .. "/") then 
+	elseif string.starts(string.lower(path), string.lower(osDir['cfg']) .. "/") or string.starts(string.lower(path), string.lower(osDir['tmp']) .. "/") then 
 		if perm < 3 then
 			error("Access Denied!", 2)
 		end
@@ -411,11 +395,11 @@ local function oDelete(path)
 	end
 	if isHidden(path) == true then
 		return
-	elseif string.starts(string.lower(path), string.lower(tmp) .. "/") then 
+	elseif string.starts(string.lower(path), string.lower(osDir['tmp']) .. "/") then 
 		if perm < 3 then
 			error("Access Denied!", 2)
 		end
-	elseif fs.isReadOnly(path) and shell.getRunningProgram() ~= (bin .. "/apt-get") then -- a little hack to allow apt-get to update system files
+	elseif fs.isReadOnly(path) and shell.getRunningProgram() ~= (osDir['bin'] .. "/apt-get") then -- a little hack to allow apt-get to update system files
 		term.writeColored("Cannot delete read-only files!\n", colors.red)
 		return
 	end
@@ -430,7 +414,7 @@ local function oOpen(path, mode)
 	end
 	if isHidden(path) == true then
 		return
-	elseif string.starts(string.lower(path), string.lower(cfg) .. "/") or string.starts(string.lower(path), string.lower(tmp) .. "/") then
+	elseif string.starts(string.lower(path), string.lower(osDir['cfg']) .. "/") or string.starts(string.lower(path), string.lower(osDir['tmp']) .. "/") then
 		if perm < 3 then
 			error("Access Denied!", 2)
 		end
@@ -443,8 +427,8 @@ end
 fs.open = oOpen
  
  -- moves the specified file replacing any existing one
- function fs.replace(from, to)
-	if shell.getRunningProgram() == (bin .. "/apt-get") then -- a little hack to allow apt-get to update system files
+function fs.replace(from, to)
+	if shell.getRunningProgram() == (osDir['bin'] .. "/apt-get") then -- a little hack to allow apt-get to update system files
 		if native.exists(to) then
 			native.delete(to)
 		end
@@ -464,7 +448,7 @@ local function oIsReadOnly(path)
 	end
 	if isHidden(path) == true then
 		return
-	elseif string.starts(string.lower(path), tmp .. "/") then
+	elseif string.starts(string.lower(path), osDir['tmp'] .. "/") then
 		return (not perm == 4)
 	else
 		for i=1, #hiddenFolders do
@@ -687,24 +671,24 @@ os.clear() -- start clean
 loading = false
 
 -- load the config
-if fs.exists(cfg .. "/cfg") then -- before native replaces default
+if fs.exists(osDir['cfg'] .. "/cfg") then -- before native replaces default
 	doAsOS(function()
-			for line in io.lines(cfg .. "/cfg") do
+			for line in io.lines(osDir['cfg'] .. "/cfg") do
 				for k,v in pairs(config) do
 					if string.starts(line, k .. "=") then
-						config[k] = util.castToTypeOf(string.sub(line, string.len(k) + 2, string.len(line)), v)
+						config[k] = os.castToTypeOf(string.sub(line, string.len(k) + 2, string.len(line)), v)
 					end
 				end
 			end
 		end)
 end
+
 -- load hardware into cache
 -- cacheHardware() this is a WIP function
-os.pause()
 
 -- make sure the sources file exist (apt-get)
-if not native.exists(cfg .. "/sources") then
-	local file = native.open(cfg .. "/sources", "w")
+if not native.exists(osDir['cfg'] .. "/sources") then
+	local file = native.open(osDir['cfg'] .. "/sources", "w")
 	file.write(URL['modules'] .. "\n")
 	file.close()
 end
@@ -759,7 +743,7 @@ if config['update'] and perm == 3 then
 	parallel.waitForAny(
 		function()
 			local res
-			downloaded, res = doAsOS(http.download, URL['version'], tmp .. "/ver")
+			downloaded, res = doAsOS(http.download, URL['version'], osDir['tmp'] .. "/ver")
 			if not downloaded then
 				res = string.sub(res, 8, string.len(res)) -- remove the "pcall: "
 				local f = string.sub(URL['version'], 1, 7) -- get the beginning of the URL
@@ -779,10 +763,10 @@ if config['update'] and perm == 3 then
 	)
 	write("\n") -- just to make it look better
 	if downloaded then
-		local file = native.open(tmp .. "/ver", "r") -- basically doAsOS
+		local file = native.open(osDir['tmp'] .. "/ver", "r") -- basically doAsOS
 		local version = file.readLine() -- only one line
 		file.close()
-		native.delete(tmp .. "/ver") -- delete the temporary file
+		native.delete(osDir['tmp'] .. "/ver") -- delete the temporary file
 		if tonumber(version) > os.getVersion() then
 			term.writeColored("A new version (" .. version .. ") is available!\n", colors.yellow)
 			term.writeColored("Update [Y/n]? ", colors.cyan)

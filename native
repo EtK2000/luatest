@@ -77,9 +77,10 @@ function http.download(url, file)
 end
 
 function string.asBoolean(str)
-	if string.lower(str) == 'yes' or string.lower(str) == 'y' or string.lower(str) == 'true' or string.lower(str) == 't' or str == '1' then
+	local s = string.lower(str)
+	if s == 'yes' or s == 'y' or s == 'true' or s == 't' or str == '1' then
 		return true
-	elseif string.lower(str) == 'no' or string.lower(str) == 'n' or string.lower(str) == 'false' or string.lower(str) == 'f' or str == '0' then
+	elseif s == 'no' or s == 'n' or s == 'false' or s == 'f' or str == '0' then
 		return false
 	else
 		error("Invalid boolean", 2)
@@ -163,6 +164,21 @@ function term.writeColored(text, fgc, bgc)
 		term.setTextColor(fg)
 	else
 		write(text)
+	end
+end
+
+function os.castToTypeOf(val, typeOf)
+	local t, f = type(typeOf), type(val)
+	if t == f then
+		return val
+	elseif t == "number" then
+		return tonumber(val)
+	elseif t == "string" then
+		return tostring(val)
+	elseif t == "boolean" and f == "string" then
+		return string.asBoolean(val)
+	else
+		error("Could not cast from " .. type(val) .. " to " .. t , 2)
 	end
 end
 
