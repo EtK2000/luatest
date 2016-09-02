@@ -18,6 +18,6 @@ else
 			term.writeColored("repo added, please run apt-get update!\n", colors.green)
 		end)
 	if not ok then
-		term.writeColored("failed to add repo: " .. res, colors.red)
+		term.writeColored("failed to add repo: " .. res .. "\n", colors.red)
 	end
 end

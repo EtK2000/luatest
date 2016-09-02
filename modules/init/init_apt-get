@@ -1,0 +1,17 @@
+-- TODO: add in completion based off of installed and repos
+
+shell.setCompletionFunction(osDir['bin'] .. "/apt-get",
+	function(shell, nIndex, sText, tPreviousText)
+		local res, results = {}, {}
+		if nIndex == 1 then
+			res = { "install", "remove", "update", "upgrade" }
+		end
+		
+		for _, word in pairs(res) do
+			if word:sub(1, #sText) == sText then
+				results[#results + 1] = word:sub(#sText + 1)
+			end
+		end
+		
+		return results
+	end)

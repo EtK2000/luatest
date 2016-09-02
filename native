@@ -101,8 +101,12 @@ function string.explode(str, div)
 	return res
 end
 
-function string.starts(String, Start)
-   return string.sub(String, 1, string.len(Start)) == Start
+function string.ends(str, End)
+   return string.sub(str, string.len(str) - string.len(End) + 1) == End
+end
+
+function string.starts(str, Start)
+   return string.sub(str, 1, string.len(Start)) == Start
 end
 
 local sb = term.setBackgroundColor

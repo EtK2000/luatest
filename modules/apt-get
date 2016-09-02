@@ -49,6 +49,8 @@ local function saveProgs(progs)
 	file.close()
 end
 
+local ok, res = true
+
 if #tArgs == 0 or string.lower(tArgs[1]) == 'help' then
 	term.writeColored("usage: apt-get <cmd> [arg]\n", colors.orange)
 	term.writeColored("  check for updates:\n", colors.orange)
@@ -103,16 +105,38 @@ elseif string.lower(tArgs[1]) == 'install' then
 						local url = string.gsub(string.gsub(v, "$name", k), "$ver", repo[v][k]["ver"])
 						term.writeColored("downloading " .. i .. "/" .. amount, colors.cyan)
 						local ok, res = os.try(http.download, url, "osData/tmp/apt/" .. url)
-						if ok then
-							fs.replace("osData/tmp/apt/" .. url, "osData/bin/" .. k)
-							term.writeColored(" done\n", colors.green)
-							if installed[v] == nil then
-								installed[v] = {}
-							end
-							installed[v][k] = repo[v][k]
-						else
-							term.writeColored("\nCouldn't install '" .. k .. "'\n", colors.red)
+						if not ok then
+							term.writeColored("\nCouldn't install '" .. k .. ":'\n", colors.red)
 							term.writeColored(res .. "\n", colors.red)
+						else
+							if repo[v][k]["run"] then
+								-- get the relative path
+								local run = v
+								if not string.ends(run, "/") then
+									run = run .. "/../";
+								end
+								run = shell.resolve(run .. repo[v][k]["run"])
+								
+								-- fix the protocol
+								local i = string.find(run, "/", 1)
+								run = string.sub(run, 1, i - 1) .. ":/" .. string.sub(run, i)
+							
+								ok, res = os.try(http.download, run, "osData/tmp/apt/" .. url .. "_init")
+							end
+							if ok then
+								fs.replace("osData/tmp/apt/" .. url, "osData/bin/" .. k)
+								if repo[v][k]["run"] then
+									fs.replace("osData/tmp/apt/" .. url .. "_init", "osData/init.d/" .. k .. "_init")
+								end
+								term.writeColored(" done\n", colors.green)
+								if not installed[v] then
+									installed[v] = {}
+								end
+								installed[v][k] = repo[v][k]
+							else
+								term.writeColored("\nCouldn't init '" .. k .. "':\n", colors.red)
+								term.writeColored(res .. "\n", colors.red)
+							end
 						end
 					end
 					saveProgs(installed)
@@ -121,9 +145,6 @@ elseif string.lower(tArgs[1]) == 'install' then
 				term.writeColored("nothing to install...\n", colors.yellow)
 			end
 		end)
-		if not ok then
-			print(res)
-		end
 elseif string.lower(tArgs[1]) == 'remove' then
 	if #tArgs == 1 then
 		term.writeColored("usage: apt-get remove <program>\n", colors.orange)
@@ -159,7 +180,7 @@ elseif string.lower(tArgs[1]) == 'remove' then
 			end
 		end)
 elseif string.lower(tArgs[1]) == 'update' then
-	os.doAsAdmin(function()
+	ok, res = os.doAsAdmin(function()
 			local file = fs.open("osData/cfg/modules", "w")
 			for line in io.lines("osData/cfg/sources") do -- <os cfg folder>/sources
 				term.writeColored(line .. " ", colors.orange)
@@ -261,4 +282,8 @@ elseif string.lower(tArgs[1]) == 'upgrade' then
 				end
 			end
 		end)
+end
+
+if not ok then
+	term.writeColored("apt-get failed: " .. res .. "\n", red)
 end
