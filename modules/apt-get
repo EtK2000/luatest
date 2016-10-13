@@ -185,6 +185,7 @@ elseif string.lower(tArgs[1]) == 'remove' then
 elseif string.lower(tArgs[1]) == 'update' then
 	ok, res = os.doAsAdmin(function()
 			local file = fs.open(osDir['cfg'] .. "/modules", "w")
+			for line in io.lines(osDir['cfg'] .. "/sources") do
 				term.writeColored(line .. " ", colors.orange)
 				local ok, res = os.try(http.download, line, osDir['tmp'] .. "/apt/" .. line)
 				if ok then
