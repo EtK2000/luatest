@@ -29,6 +29,7 @@ os.loadAPI("osData/native")
 osDir = os.readOnly({
 	['bin'] = "osData/bin", -- the os src dir
 	['cfg'] = "osData/cfg", -- the config dir
+	['init'] = "osData/init.d", -- the init dir
 	['tmp'] = "osData/tmp" -- the tmp dir
 })
 
@@ -42,7 +43,7 @@ function os.completeDir(shell, nIndex, sText, tPreviousText)
     end
 end
 
-for i, v in ipairs(fs.list(shell.resolve("osData/init.d"))) do
+for i, v in ipairs(fs.list(osDir['init'])) do
 	print("running " .. v)
 	shell.run("osData/init.d/" .. v)
 end

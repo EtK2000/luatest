@@ -11,13 +11,13 @@ else
 				end
 			end
 			
-			local file = io.open("osData/cfg/sources", "a")
+			local file = fs.open("osData/cfg/sources", "a")
 			file.write(tArgs[1] .. "\n")
 			file.close()
 			
-			term.writeColored("repo added, please run apt-get update!\n", colors.green)
+			term.writeColored("repo added, please run \"apt-get update\"!\n", colors.green)
 		end)
 	if not ok then
-		term.writeColored("failed to add repo: " .. res .. "\n", colors.red)
+		term.writeColored("failed: " .. res .. "\n", colors.red)
 	end
 end

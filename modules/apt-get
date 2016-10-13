@@ -2,7 +2,7 @@ local tArgs = { ... }
 
 local function loadAsTable()
 	local repo, curR, curM = {}
-	for line in io.lines("osData/cfg/modules") do
+	for line in io.lines(osDir['cfg'] .. "/modules") do
 		if string.starts(line, "\t\t") then
 			local v = string.explode(string.sub(line, 3, string.len(line)), "=") -- should only produce string[2]
 			repo[curR][curM][v[1]] = v[2]
@@ -19,7 +19,7 @@ end
 
 local function getInstalled()
 	local repo, curR, curM = {}
-	for line in io.lines("osData/cfg/progs") do
+	for line in io.lines(osDir['cfg'] .. "/progs") do
 		if string.starts(line, "\t\t") then
 			local v = string.explode(string.sub(line, 3, string.len(line)), "=") -- should only produce string[2]
 			repo[curR][curM][v[1]] = v[2]
@@ -36,7 +36,7 @@ end
 
 -- TODO: maybe alphebeticalize the data
 local function saveProgs(progs)
-	local file = fs.open("osData/cfg/progs", "w")
+	local file = fs.open(osDir['cfg'] .. "/progs", "w")
 	for k, arr in pairs(progs) do
 		file.write(k .. "\n")
 		for mod, data in pairs(arr) do
@@ -104,7 +104,7 @@ elseif string.lower(tArgs[1]) == 'install' then
 						i = i + 1
 						local url = string.gsub(string.gsub(v, "$name", k), "$ver", repo[v][k]["ver"])
 						term.writeColored("downloading " .. i .. "/" .. amount, colors.cyan)
-						local ok, res = os.try(http.download, url, "osData/tmp/apt/" .. url)
+						local ok, res = os.try(http.download, url, osDir['tmp'] .. "/apt/" .. url)
 						if not ok then
 							term.writeColored("\nCouldn't install '" .. k .. ":'\n", colors.red)
 							term.writeColored(res .. "\n", colors.red)
@@ -121,18 +121,21 @@ elseif string.lower(tArgs[1]) == 'install' then
 								local i = string.find(run, "/", 1)
 								run = string.sub(run, 1, i - 1) .. ":/" .. string.sub(run, i)
 							
-								ok, res = os.try(http.download, run, "osData/tmp/apt/" .. url .. "_init")
+								ok, res = os.try(http.download, run, osDir['tmp'] .. "/apt/" .. url .. "_init")
 							end
 							if ok then
-								fs.replace("osData/tmp/apt/" .. url, "osData/bin/" .. k)
+								fs.replace(osDir['tmp'] .. "/apt/" .. url, osDir['bin'] .. "/" .. k)
 								if repo[v][k]["run"] then
-									fs.replace("osData/tmp/apt/" .. url .. "_init", "osData/init.d/" .. k .. "_init")
+									fs.replace(osDir['tmp'] .. "/apt/" .. url .. "_init", osDir['init'] .. "/" .. k .. "_init")
 								end
 								term.writeColored(" done\n", colors.green)
 								if not installed[v] then
 									installed[v] = {}
 								end
 								installed[v][k] = repo[v][k]
+								if repo[v][k]["run"] then
+									installed[v][k]["run"] = k .. "_init"
+								end
 							else
 								term.writeColored("\nCouldn't init '" .. k .. "':\n", colors.red)
 								term.writeColored(res .. "\n", colors.red)
@@ -170,7 +173,7 @@ elseif string.lower(tArgs[1]) == 'remove' then
 				term.writeColored("remove " .. amount .. " programs? [Y/n] ", colors.yellow)
 				if term.YN() then
 					for k, v in pairs(rem) do
-						fs.delete("osData/bin/" .. k)
+						fs.delete(osDir['bin'] .. "/" .. k)
 						installed[v][k] = nil
 					end
 					saveProgs(installed)
@@ -181,14 +184,13 @@ elseif string.lower(tArgs[1]) == 'remove' then
 		end)
 elseif string.lower(tArgs[1]) == 'update' then
 	ok, res = os.doAsAdmin(function()
-			local file = fs.open("osData/cfg/modules", "w")
-			for line in io.lines("osData/cfg/sources") do -- <os cfg folder>/sources
+			local file = fs.open(osDir['cfg'] .. "/modules", "w")
 				term.writeColored(line .. " ", colors.orange)
-				local ok, res = os.try(http.download, line, "osData/tmp/apt/" .. line)
+				local ok, res = os.try(http.download, line, osDir['tmp'] .. "/apt/" .. line)
 				if ok then
 					term.writeColored("HIT\n", colors.green)
 					local fine, base, form = true
-					for l in io.lines("osData/tmp/apt/" .. line) do
+					for l in io.lines(osDir['tmp'] .. "/apt/" .. line) do
 						if not string.starts(l, "#") then -- ignore comments
 							if fine then
 								if string.starts(l, '[basepath]=') then
@@ -226,13 +228,13 @@ elseif string.lower(tArgs[1]) == 'update' then
 					if not fine then
 						term.writeColored("Invalid index!\n", colors.red)
 					end
-					fs.delete("osData/tmp/apt/" .. line) -- take up less space
+					fs.delete(osDir['tmp'] .. "/apt/" .. line) -- take up less space
 				else
 					term.writeColored("MISS\n", colors.red)
 				end
 			end
 			file.close()
-			fs.delete("osData/tmp/apt")
+			fs.delete(osDir['tmp'] .. "/apt")
 		end)
 elseif string.lower(tArgs[1]) == 'upgrade' then
 	ok, res = os.doAsAdmin(function()
@@ -265,9 +267,9 @@ elseif string.lower(tArgs[1]) == 'upgrade' then
 						for i=1, #arr do
 							local url = string.gsub(string.gsub(k, "$name", arr[i][1]), "$ver", arr[i][2])
 						term.writeColored("downloading " .. i .. "/" .. #arr, colors.cyan)
-							local ok, res = os.try(http.download, url, "osData/tmp/apt/" .. url)
+							local ok, res = os.try(http.download, url, osDir['tmp'] .. "/apt/" .. url)
 							if ok then
-								fs.replace("osData/tmp/apt/" .. url, "osData/bin/" .. arr[i][1])
+								fs.replace(osDir['tmp'] .. "/apt/" .. url, osDir['bin'] .. "/" .. arr[i][1])
 								term.writeColored(" done\n", colors.green)
 								installed[k][arr[1][1]]["ver"] = repo[k][arr[1][1]]["ver"]
 							else
@@ -278,7 +280,7 @@ elseif string.lower(tArgs[1]) == 'upgrade' then
 					end
 					
 					saveProgs(installed)
-					fs.delete("osData/tmp/apt")
+					fs.delete(osDir['tmp'] .. "/apt")
 				end
 			end
 		end)
