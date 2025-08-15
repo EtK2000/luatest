@@ -14,15 +14,13 @@ This is the home of my OS for ComputerCraft.
 
 ## Installation
 
-replace &lt;disk/startup&gt; with whatever location you want, but is needs to be on a disk.<br>
-<br>
-You can either download
-from [github](https://raw.githubusercontent.com/EtK2000/Alb-no-OS/master/installer) (the most recent version):
-### wget https://raw.githubusercontent.com/EtK2000/Alb-no-OS/master/installer &lt;disk/startup&gt;<br>
-or from [my site](http://cc.etk2000.com/albÿno/src/installer) (the most recent stable version):
-### wget http://cc.etk2000.com/alb%C3%BFno/src/installer &lt;disk/startup&gt;
+You can download the most recent version via (note that it needs the extension):
 
-Now just run &lt;disk/startup&gt;.
+```
+wget https://raw.githubusercontent.com/EtK2000/Alb-no-OS/master/installer/main.lua disk/startup.lua
+```
+
+Now just boot up a computer with the disk attached to start the installation.
 
 ## Repo setup
 

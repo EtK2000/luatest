@@ -1,0 +1,29 @@
+# base of the module repository, available vars are:
+#	$name  - name of the module file (string) [required]
+#	$ver   - version of the module (number)
+#
+[basepath]=https://raw.githubusercontent.com/EtK2000/luatest/master/modules/$name
+# format of lines, available vars are:
+#	$alone - is the module standalone? (0/1) [defaults to 1]
+#	$dep   - modules the module depends on (string) [format: <dep 1>;<dep 2>;<dep 3>]
+#	$disp  - display name of the module (string) [defaults to $name]
+#	$max   - the maximum Albyno version (number >= $min) [normally build version, defaults to infinity]
+#	$min   - the minimum Albyno version required (number >= 0) [defaults to 0]
+#	$name  - name of the module file (string)
+#	$req   - is the module required by the source? (0/1) [defaults to 0]
+#	$run   - the url of the init file for this module, relative to basepath [defaults to nil]
+#	$ver   - version of the module (number > 0)
+#
+# not all vars have to be filled in, but $name and $ver are required
+[format]=$name,$ver,$req,$run,$dep,$min,$max
+add-apt-repository,0.1,1
+apt-get,0.2,1,init/apt-get
+cmd,0.2,1
+color,0.1,0,init/color,cmd
+config,0.1,1,init/config
+download,0.1
+echo,0.1
+explorer,0.1,0,init/explorer
+su,0.1
+sudo,0.1,0,init/sudo
+whoami,1
