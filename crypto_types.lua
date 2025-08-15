@@ -1,0 +1,45 @@
+---@meta
+---@see https://github.com/Egor-Skriptunoff/pure_lua_SHA
+---This file is for types defined in the crypto library used by Albyno
+
+---@class Crypto
+---@field base642bin fun(message: string): string
+---@field base64_to_bin fun(message: string): string
+---@field bin2base64 fun(message: string): string
+---@field bin2hex fun(message: string): string
+---@field bin_to_base64 fun(message: string): string
+---@field bin_to_hex fun(message: string): string
+---@field blake2 fun(message: string, key: string, salt: string, digestSizeInBytes: integer): string
+---@field blake2b fun(message: string, key: string, salt: string, digestSizeInBytes: integer): string
+---@field blake2b_160 fun(message: string, key: string, salt: string): string
+---@field blake2b_256 fun(message: string, key: string, salt: string): string
+---@field blake2b_384 fun(message: string, key: string, salt: string): string
+---@field blake2b_512 fun(message: string, key: string, salt: string): string
+---@field blake2bp fun(message: string, key: string, salt: string, digestSizeInBytes: integer): string
+---@field blake2s fun(message: string, key: string, salt: string, digestSizeInBytes: integer): string
+---@field blake2s_128 fun(message: string, key: string, salt: string): string
+---@field blake2s_160 fun(message: string, key: string, salt: string): string
+---@field blake2s_224 fun(message: string, key: string, salt: string): string
+---@field blake2s_256 fun(message: string, key: string, salt: string): string
+---@field blake2sp fun(message: string, key: string, salt: string, digestSizeInBytes: integer): string
+---@field blake2xb fun(digestSizeInBytes: integer, message: string, key: string, salt: string): string
+---@field blake2xs fun(digestSizeInBytes: integer, message: string, key: string, salt: string): string
+---@field blake3 fun(message: string, key: string, digestSizeInBytes: integer): string
+---@field blake3_derive_key fun(keyMaterial: string, contextString: string, digestSizeInBytes: integer): string
+---@field hex2bin fun(message: string): string
+---@field hex_to_bin fun(message: string): string
+---@field hmac fun(hasFunc: fun(message: string), message: string): string
+---@field md5 fun(message: string): string
+---@field sha1 fun(message: string): string
+---@field sha224 fun(message: string): string
+---@field sha256 fun(message: string): string
+---@field sha384 fun(message: string): string
+---@field sha3_224 fun(message: string): string
+---@field sha3_256 fun(message: string): string
+---@field sha3_384 fun(message: string): string
+---@field sha3_512 fun(message: string): string
+---@field sha512 fun(message: string): string
+---@field sha512_224 fun(message: string): string
+---@field sha512_256 fun(message: string): string
+---@field shake128 fun(digestSizeInBytes: integer, message: string): string
+---@field shake256 fun(digestSizeInBytes: integer, message: string): string
