@@ -1,10 +1,4 @@
----@class VersionCatalog
----@field public core number
----@field public modules {[string]: integer}
-
 ---@class Version
----@field loadVersionCatalog fun(versionCatalogPath: string): VersionCatalog
----@field saveVersionCatalog fun(versionCatalog: VersionCatalog, versionCatalogPath: string)
 version = {}
 
 

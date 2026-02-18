@@ -21,9 +21,9 @@ apt-get,0.2,1,init/apt-get
 cmd,0.2,1
 color,0.1,0,init/color,cmd
 config,0.1,1,init/config
-download,0.1
 echo,0.1
 explorer,0.1,0,init/explorer
+pwd,1
 su,0.1
 sudo,0.1,0,init/sudo
 whoami,1

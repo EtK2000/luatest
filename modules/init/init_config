@@ -11,7 +11,8 @@ for k, v in pairs(colors) do
 	end
 end
 
-shell.setCompletionFunction(osDir['bin'] .. "/config",
+shell.setCompletionFunction(
+	osDir['bin'] .. "/config",
 	function(shell, nIndex, sText, tPreviousText)
 		local res, results = {}, {}
 		if nIndex == 1 then
@@ -19,12 +20,13 @@ shell.setCompletionFunction(osDir['bin'] .. "/config",
 		elseif nIndex == 2 then
 			res = t[tPreviousText[#tPreviousText]]
 		end
-		
+
 		for _, word in pairs(res) do
 			if word:sub(1, #sText) == sText then
 				results[#results + 1] = word:sub(#sText + 1)
 			end
 		end
-		
+
 		return results
-	end)
+	end
+)

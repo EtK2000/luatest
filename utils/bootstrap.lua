@@ -9,6 +9,7 @@ local UTILS_FILES_TO_DOWNLOAD_NORMALLY = {
 	'colors',
 	'gui',
 	'repo',
+	'users',
 	'version'
 }
 
@@ -155,20 +156,34 @@ return function(context, utilsDir)
 		fs.makeDir(utilsDir)
 	end
 
-	-- First, we would like to pull http_utils.lua so we can call `http.download` for the rest
-	downloadAndInjectHttpUtils(context, utilsDir)
+	-- Allow all utils access to the context
+	_G.__bootstrap_context = context
 
-	-- Now download os_utils.lua for `os.try`
-	downloadAndInjectOsUtils(context, utilsDir)
+	local ok, err = pcall(function()
+		-- First, we would like to pull http_utils.lua so we can call `http.download` for the rest
+		downloadAndInjectHttpUtils(context, utilsDir)
 
-	-- Download everything else with a nicer loading
-	os.clear()
-	os.catchTerminate()
-	parallel.waitForAny(
-		downloadAndInjectRemainingUtils(context, utilsDir),
-		letUserCancel,
-		os.loading
-	)
+		-- Now download os_utils.lua for `os.try`
+		downloadAndInjectOsUtils(context, utilsDir)
+
+		-- Download everything else with a nicer loading
+		os.clear()
+		os.catchTerminate()
+		parallel.waitForAny(
+			downloadAndInjectRemainingUtils(context, utilsDir),
+			letUserCancel,
+			os.loading
+		)
+	end)
+
+	-- Unset the context
+	---@type BootstrapContext
+	_G.__bootstrap_context = nil
+
+	-- Reraise any errors after we unset the context
+	if not ok then
+		error(err, 0)
+	end
 
 	return doPrivileged
 

@@ -18,11 +18,15 @@ function http.download(url, filepath)
 		return content
 	end
 
-	local file = fs.open(filepath, 'w')
-	if not file then
+	local ok, errOrFile = pcall(function()
+		return fs.open(filepath, 'w')
+	end)
+	if not ok then
+		error(errOrFile .. ' error trying to open ' .. filepath, 2)
+	elseif not errOrFile then
 		error('Could not open file ' .. filepath, 3)
 	end
 
-	file.write(content)
-	file.close()
+	errOrFile.write(content)
+	errOrFile.close()
 end

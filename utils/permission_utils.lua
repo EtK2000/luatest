@@ -1,5 +1,7 @@
 --- This file effectively sets up ring-0 protection
 
+local context = _G.__bootstrap_context
+
 
 ---Permissions based off Linux 777
 ---@enum permission
@@ -69,7 +71,9 @@ local function checkIfAccessShouldBeDenied(path, permission)
 	end
 
 	-- Block access to OS directory, we use `fs.combine` to resolve path traversal
-	return rawStringStartsWith(rawFsCombine(path), 'osData')
+	local realPath = rawFsCombine(path)
+	return rawStringStartsWith(realPath, context.osPath)
+		or rawStringStartsWith('/' .. realPath, context.osPath)
 end
 
 

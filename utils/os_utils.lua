@@ -1,10 +1,7 @@
----@type boolean
+local context = _G.__bootstrap_context
 local isTerminationCaught = false
 local rawOsPullEvent = os.pullEvent
 local rawOsPullEventRaw = os.pullEventRaw
-
----@type string
-local osName = 'Alb' .. string.char(255) .. 'no'
 
 ---Attempts to cast `val` to the type of `typeOf`
 ---@generic T
@@ -44,13 +41,13 @@ end
 ---Get the name of the current OS
 ---@return string
 function os.getName()
-	return osName
+	return 'Alb\255no'
 end
 
 ---Get the name of the current OS, or -1 if not installed
 ---@return integer
 function os.getVersion()
-	local file = fs.open('osData/version.txt', 'r')
+	local file = fs.open(context.osPath .. '/version.txt', 'r')
 	if not file then
 		return -1
 	end

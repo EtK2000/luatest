@@ -25,7 +25,9 @@ local function getModuleUrl(repository, mod)
 	end
 
 	for formatField, moduleField in pairs(mapRepoIndexToModuleDefField) do
-		res = string.gsub(res, '%' .. formatField, moduleDefinition[moduleField])
+		if moduleDefinition[moduleField] ~= nil then
+			res = string.gsub(res, '%' .. formatField, moduleDefinition[moduleField])
+		end
 	end
 
 	return res
@@ -77,20 +79,20 @@ local function loadRepoIndex(repoIndexContent)
 	end
 
 	-- Now use `format` to process `rawModuleLines`
-	---@type ModuleDefinition[]
+	---@type {[string]: ModuleDefinition}
 	local moduleDefinitions = {}
 	for _, line in pairs(rawModuleLines) do
 		---@type ModuleDefinition
 		local currentModuleDefinition = {
-			['isStandalone'] = 1,
-			['dependencies'] = {},
-			['displayName'] = nil,
-			['maxSupportedOsVersion'] = -1,
-			['minSupportedOsVersion'] = -1,
-			['name'] = '',
-			['isRequiredForRepository'] = 0,
-			['initFileUrl'] = nil,
-			['version'] = -1
+			isStandalone = 1,
+			dependencies = {},
+			displayName = nil,
+			maxSupportedOsVersion = -1,
+			minSupportedOsVersion = -1,
+			name = '',
+			isRequiredForRepository = 0,
+			initFileUrl = nil,
+			version = -1
 		}
 
 		local moduleFieldValues = string.explode(line, ',')
@@ -125,8 +127,8 @@ local function loadRepoIndex(repoIndexContent)
 
 	---@type RepositoryIndex
 	local res = {
-		['basepath'] = basepath,
-		['moduleDefinitions'] = moduleDefinitions
+		basepath = basepath,
+		moduleDefinitions = moduleDefinitions
 	}
 	return table.readOnly(res)
 end
@@ -179,11 +181,11 @@ local function loadRepo(repositoryUrl)
 
 	---@type Repository
 	local res = {
-		['getModuleUrl'] = getModuleUrl,
-		['index'] = repoIndex,
-		['installModule'] = moduleInstall,
-		['uninstallModule'] = moduleUninstall,
-		['url'] = repositoryUrl
+		getModuleUrl = getModuleUrl,
+		index = repoIndex,
+		installModule = moduleInstall,
+		uninstallModule = moduleUninstall,
+		url = repositoryUrl
 	}
 	return table.readOnly(res)
 end
@@ -192,5 +194,5 @@ end
 -- Lock this util package
 ---@type Repo
 _G.repo = table.readOnly({
-	['loadRepo'] = loadRepo
+	loadRepo = loadRepo
 })

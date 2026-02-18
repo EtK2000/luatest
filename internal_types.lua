@@ -7,17 +7,19 @@
 
 
 ---@class BootstrapContext
+---@field public crypto Crypto The crypto lib downloaded from `cryptoLibraryUrl`
+---@field public osPath string The path were the OS should be located
 ---@field public redownload boolean
 ---@field public repoPrefix string
 
 
 ---@class (exact) InstallerContext : BootstrapContext
----@field public crypto Crypto The crypto lib downloaded from `cryptoLibraryUrl`
 ---@field public cryptoLibraryUrl string The URL from which to download the crypto lib
+---@field public defaultModules string[]
 ---@field public forceRedownloadFilePath string
 ---@field public installType InstallType
----@field public log fun(str: string, color?: colors)
----@field public osPath string The path were the OS should be located
+---@field public log fun(str: string, color?: ccTweaked.colors.color)
+---@field public moduleDir string
 ---@field public redownload boolean Whether or not everything should be redownloaded
 ---@field public repoPrefix string
 ---@field public version {['installer']: InstallerVersionCatalog, ['latest']: InstallerVersionCatalog}
@@ -31,6 +33,7 @@
 
 ---@class (exact) Gui
 ---@field public Button GuiButton
+---@field public Checkbox GuiCheckbox
 ---@field public Label GuiLabel
 ---@field public TextField GuiTextField
 ---@field public Window GuiWindow
@@ -41,6 +44,17 @@
 ---@field private __index GuiButton
 ---@field public draw fun(self: GuiButton)
 ---@field public new fun(parent: GuiWindow, text: string, onClick?: fun()): GuiButton
+---@field public text string
+
+
+---@class (exact) GuiCheckbox : GuiWindowComponent
+---@field private __index GuiCheckbox
+---@field public checked boolean
+---@field public draw fun(self: GuiCheckbox)
+---@field public drawFocus fun(self: GuiCheckbox)
+---@field public new fun(parent: GuiWindow, text: string, checked?: boolean): GuiCheckbox
+---@field public onChange? fun() A handler to be run after `self.checked` changes
+---@field public onKey fun(self: GuiCheckbox, key: integer)
 ---@field public text string
 
 
@@ -69,10 +83,16 @@
 ---@class (exact) GuiWindow
 ---@field private __index GuiWindow
 ---@field private h integer
+---@field private drawScrollIndicators fun(self: GuiWindow) Draw up/down arrow indicators when content is scrollable
+---@field private getMaxScroll fun(self: GuiWindow): integer Get the maximum scroll offset
 ---@field private handleClickEvents fun(self: GuiWindow): fun() Wrapper for handling click events, returns the actual handler of `self:handleClickEventsInner`
 ---@field private handleClickEventsInner fun(self: GuiWindow) Handle click events inner function
 ---@field private handleTerminateEvents fun(self: GuiWindow): fun() Set `self.closeRequested = true` if a terminate was caught
 ---@field private isClickOnWindowX fun(self: GuiWindow, clickX: integer, clickY: integer): boolean Check if the given relative coords are where the 'X' button is
+---@field private scrollOffset integer Number of rows scrolled down
+---@field private scrollToFocus fun(self: GuiWindow) Adjust scroll offset to make the focused component visible
+---@field private totalContentHeight integer Total virtual height of all content
+---@field private visibleHeight integer Height of the content area
 ---@field private waitForCloseRequested fun(self: GuiWindow): fun() Return when/if close was requested
 ---@field private w integer
 ---@field private x integer
@@ -104,29 +124,38 @@
 ---@field onChar? fun(self: GuiWindowComponent, char: string) Handle a character being typed
 ---@field onClick? fun()
 ---@field onKey? fun(self: GuiWindowComponent, key: integer) Handle a key being pressed
+---@field isFocusable fun(self: GuiWindowComponent): boolean
 ---@field isOver fun(self: GuiWindowComponent, x: integer, y: integer): boolean Checks whether or not a coordinate is over this component
 
 
 ---Note that any unset background field will default to `windowBackground`
 ---and any unset foreground field will default to `windowForeground`
 ---@class (exact) WindowStyle
----@field public buttonBackground? colors
----@field public buttonForeground? colors
----@field public buttonDisabledBackground? colors
----@field public buttonDisabledForeground? colors
----@field public labelBackground? colors
----@field public labelForeground? colors
----@field public textFieldBackground? colors
----@field public textFieldForeground? colors
----@field public textFieldDisabledBackground? colors
----@field public textFieldDisabledForeground? colors
----@field public textFieldPlaceholderForeground? colors
----@field public titlebarBackground? colors
----@field public titlebarForeground? colors
----@field public titlebarXBackground? colors
----@field public titlebarXForeground? colors
----@field public windowBackground colors
----@field public windowForeground colors
+---@field public buttonBackground? ccTweaked.colors.color
+---@field public buttonForeground? ccTweaked.colors.color
+---@field public buttonDisabledBackground? ccTweaked.colors.color
+---@field public buttonDisabledForeground? ccTweaked.colors.color
+---@field public checkboxBackground? ccTweaked.colors.color
+---@field public checkboxBoxBackground? ccTweaked.colors.color
+---@field public checkboxBoxDisabledBackground? ccTweaked.colors.color
+---@field public checkboxBoxDisabledForeground? ccTweaked.colors.color
+---@field public checkboxBoxForeground? ccTweaked.colors.color
+---@field public checkboxDisabledBackground? ccTweaked.colors.color
+---@field public checkboxDisabledForeground? ccTweaked.colors.color
+---@field public checkboxForeground? ccTweaked.colors.color
+---@field public labelBackground? ccTweaked.colors.color
+---@field public labelForeground? ccTweaked.colors.color
+---@field public textFieldBackground? ccTweaked.colors.color
+---@field public textFieldForeground? ccTweaked.colors.color
+---@field public textFieldDisabledBackground? ccTweaked.colors.color
+---@field public textFieldDisabledForeground? ccTweaked.colors.color
+---@field public textFieldPlaceholderForeground? ccTweaked.colors.color
+---@field public titlebarBackground? ccTweaked.colors.color
+---@field public titlebarForeground? ccTweaked.colors.color
+---@field public titlebarXBackground? ccTweaked.colors.color
+---@field public titlebarXForeground? ccTweaked.colors.color
+---@field public windowBackground ccTweaked.colors.color
+---@field public windowForeground ccTweaked.colors.color
 
 
 -------------------------
@@ -169,4 +198,36 @@
 
 ---@class (exact) RepositoryIndex
 ---@field public basepath string
----@field public moduleDefinitions ModuleDefinition[]
+---@field public moduleDefinitions {[string]: ModuleDefinition}
+
+
+---------------------
+--- Users Classes ---
+---------------------
+
+
+---@class users.User
+---@field public authorize fun(password: string): boolean
+---@field public name string
+---@field public type users.UserType
+
+
+---@class users.Localization
+---@field public continue string
+---@field public password string
+---@field public title string
+---@field public username string
+
+
+-----------------------
+--- Version Classes ---
+-----------------------
+
+
+---@class VersionCatalog
+---@field public core number
+---@field public modules {[string]: integer}
+
+---@class Version
+---@field public loadVersionCatalog fun(versionCatalogPath: string): VersionCatalog
+---@field public saveVersionCatalog fun(versionCatalog: VersionCatalog, versionCatalogPath: string)

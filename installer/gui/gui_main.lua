@@ -20,7 +20,7 @@ local windowConsole = gui.Window.new(
 
 ---Write `str` to the console and scroll if needed
 ---@param str string
----@param color? colors
+---@param color? ccTweaked.colors.color
 local function log(str, color)
 	local console = windowConsole.hwndContent
 	console.setCursorPos(1, CONSOLE_HEIGHT - 1)
@@ -49,8 +49,9 @@ end
 
 ---Create the main content window
 ---@param installerContext InstallerContext
+---@param doInstall fun()
 ---@return GuiWindow
-local function createInstallerWindow(installerContext)
+local function createInstallerWindow(installerContext, doInstall)
 	local windowInstaller = gui.Window.new(
 		os.getName() .. ' Installer v' .. installerContext.version.installer.core,
 		1, 1,
@@ -58,7 +59,7 @@ local function createInstallerWindow(installerContext)
 	)
 
 	-- Set install button text based off assumed install type
-	gui.Button.new(windowInstaller, installerContext.installType .. ' ' .. os.getName())
+	gui.Button.new(windowInstaller, installerContext.installType .. ' ' .. os.getName(), doInstall)
 
 	if installerContext.version.latest.core > installerContext.version.installer.core then
 		gui.Button.new(
@@ -73,7 +74,8 @@ end
 
 
 ---@param installerContext InstallerContext
-return function(installerContext)
+---@param doInstall fun()
+return function(installerContext, doInstall)
 	installerContext.log = log
-	installerContext.window = createInstallerWindow(installerContext)
+	installerContext.window = createInstallerWindow(installerContext, doInstall)
 end
