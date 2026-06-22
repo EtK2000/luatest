@@ -2,9 +2,9 @@
 local pullEvent = os.pullEvent
 os.pullEvent = os.pullEventRaw
 
-local perm = 0 -- permission level (0: not logged in, 1: guest, 2: user, 3: super)
+local perm = 0                     -- permission level (0: not logged in, 1: guest, 2: user, 3: super)
 local displayName
-local hiddenFiles = { 'startup' } -- files hidden by OS
+local hiddenFiles = { 'startup' }  -- files hidden by OS
 local hiddenFolders = { 'osData' } -- folders hidden by OS, child folders AREN'T hidden (for access to osDir['bin'] and osDir['cfg'])
 local native = {}
 local loading = true
@@ -18,7 +18,7 @@ local maxUsername, maxPassword = 10, 10
 -- paths
 -- 1 ***** User's Renamed File, Named To Be Hidden
 local userStartup = '1userStartupURFNTOBH' -- the name given to the renamed 'startup'
-local usersFile = 'osData/crd' -- the file containing the users' credentials, is would be awesome to encode this
+local usersFile = 'osData/crd'             -- the file containing the users' credentials, is would be awesome to encode this
 
 ----------------------
 -- load native junk --
@@ -27,10 +27,10 @@ local usersFile = 'osData/crd' -- the file containing the users' credentials, is
 os.loadAPI('osData/native')
 
 osDir = os.readOnly({
-	['bin'] = 'osData/bin', -- the os src dir
-	['cfg'] = 'osData/cfg', -- the config dir
+	['bin'] = 'osData/bin',  -- the os src dir
+	['cfg'] = 'osData/cfg',  -- the config dir
 	['init'] = 'osData/init.d', -- the init dir
-	['tmp'] = 'osData/tmp' -- the tmp dir
+	['tmp'] = 'osData/tmp'   -- the tmp dir
 })
 
 ----------------------
@@ -38,9 +38,9 @@ osDir = os.readOnly({
 ----------------------
 
 function os.completeDir(shell, nIndex, sText, tPreviousText)
-    if nIndex == 1 then
-        return fs.complete(sText, shell.dir(), false, true)
-    end
+	if nIndex == 1 then
+		return fs.complete(sText, shell.dir(), false, true)
+	end
 end
 
 for i, v in ipairs(fs.list(osDir['init'])) do
@@ -59,7 +59,7 @@ shell.setAlias('ren', 'rename')
 
 local repoPrefix = 'https://raw.githubusercontent.com/EtK2000/Alb-no-OS/master/'
 local URL = os.readOnly({
-	['core'] = repoPrefix .. 'core', -- the startup file
+	['core'] = repoPrefix .. 'core',    -- the startup file
 	['modules'] = repoPrefix .. 'modules', -- the modules index
 	['version'] = repoPrefix .. 'version' -- the current version
 })
@@ -77,8 +77,8 @@ function periph.getType(self)
 end
 
 local function NewPeripheral(type, peripheral)
-    local obj = { t = type, p = peripheral }
-    return setmetatable( obj, periph )
+	local obj = { t = type, p = peripheral }
+	return setmetatable(obj, periph)
 end
 
 -- cache
@@ -88,10 +88,10 @@ local peri = {}
 
 -- config
 local config = {
-	['animate'] = true, -- do animations? (only available on colored computers)
+	['animate'] = true,       -- do animations? (only available on colored computers)
 	['desktop'] = colors.yellow, -- desktop color (only available on colored computers)
-	['require_pass'] = true, -- request password for admin actions? (if logged in as admin)
-	['update'] = true -- check for updates?
+	['require_pass'] = true,  -- request password for admin actions? (if logged in as admin)
+	['update'] = true         -- check for updates?
 }
 
 function os.getConfig(K)
@@ -134,7 +134,7 @@ function os.setConfig(K, V)
 	end
 	-- you only get here if no errors accord
 	local file = native.open(osDir['cfg'] .. '/cfg', 'w')
-	for k,v in pairs(config) do
+	for k, v in pairs(config) do
 		file.write(k .. '=' .. tostring(v) .. '\n')
 	end
 	file.close()
@@ -150,11 +150,11 @@ end
 -- AUTH_LEVEL
 local function doAuth(username, password)
 	local file = native.open(usersFile, 'r')
-	local line = file.readLine() -- read USERNAME
+	local line = file.readLine()                       -- read USERNAME
 	while line ~= nil do
 		if string.lower(username) == string.lower(line) then -- validate USERNAME
-			if password == file.readLine() then -- validate PASSWORD
-				local res = file.readLine() -- return PERM_LEVEL
+			if password == file.readLine() then        -- validate PASSWORD
+				local res = file.readLine()            -- return PERM_LEVEL
 				file.close()
 				displayName = line
 				return line .. res -- {USERNAME}{AUTH_LEVEL}
@@ -162,7 +162,7 @@ local function doAuth(username, password)
 		else
 			file.readLine() -- skip PASSWORD
 		end
-		file.readLine() -- skip PERM_LEVEL
+		file.readLine()  -- skip PERM_LEVEL
 		line = file.readLine() -- continue to next USERNAME
 	end
 	file.close()
@@ -170,7 +170,7 @@ local function doAuth(username, password)
 end
 
 -- NOTE: returns the completed, result, can cause errors if opening OS files then os.trying to modify not as OS
--- NEVER RUN THIS WITHIN parallel.waitForAny WITH OTHER FINITE FUNCTIONS!!! IT MAY CAUSE PERMISSION LEAKS 
+-- NEVER RUN THIS WITHIN parallel.waitForAny WITH OTHER FINITE FUNCTIONS!!! IT MAY CAUSE PERMISSION LEAKS
 local function doAsOS(func, ...)
 	local p = perm
 	perm = 4
@@ -186,7 +186,7 @@ function os.doAsAdmin(func, ...)
 		ok, res = os.try(func, ...)
 	elseif perm == 3 then
 		if config['require_pass'] then
-			for i=1, 3 do -- do login, and if you fail thrice error
+			for i = 1, 3 do -- do login, and if you fail thrice error
 				write('Password: ')
 				if doAuth(username, read('*')) == 0 then
 					if i == 3 then
@@ -203,7 +203,7 @@ function os.doAsAdmin(func, ...)
 	else
 		-- make the user login with an admin (temporarily)
 		local p = perm
-		for i=1, 3 do -- do login, and if you fail thrice error
+		for i = 1, 3 do -- do login, and if you fail thrice error
 			write('Username: ')
 			local u = read()
 			write('Password: ')
@@ -237,10 +237,10 @@ local function createUser(perm_level)
 	if perm_level < 1 or perm_level > 3 then
 		error('Invalid perm_level, range is 1-3')
 	end
-	
+
 	local username
 	local password
-	
+
 	while true do
 		os.clear()
 		write('Username: ')
@@ -263,7 +263,7 @@ local function createUser(perm_level)
 		sleep(2)
 	end
 	os.clear()
-	
+
 	-- save the user
 	local file = native.open(usersFile, fs.exists(usersFile) and 'a' or 'w')
 	file.writeLine(username)
@@ -273,12 +273,12 @@ local function createUser(perm_level)
 end
 
 local function isHidden(path)
-	for i=1, #hiddenFiles do
+	for i = 1, #hiddenFiles do
 		if string.lower(path) == string.lower(hiddenFiles[i]) then
 			return true
 		end
 	end
-	for i=1, #hiddenFolders do
+	for i = 1, #hiddenFolders do
 		if string.lower(path) == string.lower(hiddenFolders[i]) then
 			return true
 		elseif string.starts(string.lower(path), string.lower(hiddenFolders[i]) .. '/') and not string.find(string.lower(path), '/', string.len(hiddenFolders[i]) + 3) and not native.isDir(path) then
@@ -289,15 +289,15 @@ local function isHidden(path)
 end
 
 local function removeHiddenFromList(list)
-	for i=#list, 1, -1  do
-		for j=1, #hiddenFiles do
+	for i = #list, 1, -1 do
+		for j = 1, #hiddenFiles do
 			if type(list[i]) == 'string' then
 				if string.lower(list[i]) == string.lower(hiddenFiles[j]) then
 					table.remove(list, i)
 				end
 			end
 		end
-		for j=1, #hiddenFolders do
+		for j = 1, #hiddenFolders do
 			if type(list[i]) == 'string' then
 				if string.lower(list[i]) == string.lower(hiddenFolders[j]) then
 					table.remove(list, i)
@@ -321,7 +321,7 @@ local function oFind(path)
 	end
 	local list = native.find(path)
 	removeHiddenFromList(list)
-	for i=1, #list do
+	for i = 1, #list do
 		if list[i] == userStartup then
 			list[i] = 'startup'
 		end
@@ -333,12 +333,12 @@ fs.find = oFind
 native.list = fs.list
 local function oList(path)
 	if not fs.isDir(path) then
-		term.writeColored('Directory doesn't exist!\n', colors.red)
+		term.writeColored('Directory doesn\'t exist!\n', colors.red)
 		return {}
 	end
 	local list = native.list(path)
 	removeHiddenFromList(list)
-	for i=1, #list do
+	for i = 1, #list do
 		if list[i] == userStartup then
 			list[i] = 'startup'
 		end
@@ -346,7 +346,7 @@ local function oList(path)
 	return list
 end
 fs.list = oList
- 
+
 native.exists = fs.exists
 local function oExists(path)
 	if string.lower(path) == 'startup' then
@@ -358,7 +358,7 @@ local function oExists(path)
 	return native.exists(path)
 end
 fs.exists = oExists
- 
+
 native.ioOpen = io.open
 local function oIoOpen(path, mode)
 	if string.lower(path) == 'startup' then
@@ -366,7 +366,7 @@ local function oIoOpen(path, mode)
 	end
 	if isHidden(path) == true then
 		return
-	elseif string.starts(string.lower(path), string.lower(osDir['cfg']) .. '/') or string.starts(string.lower(path), string.lower(osDir['tmp']) .. '/') then 
+	elseif string.starts(string.lower(path), string.lower(osDir['cfg']) .. '/') or string.starts(string.lower(path), string.lower(osDir['tmp']) .. '/') then
 		if perm < 3 then
 			error('Access Denied!', 2)
 		end
@@ -377,7 +377,7 @@ local function oIoOpen(path, mode)
 	return native.ioOpen(path)
 end
 io.open = oIoOpen
- 
+
 native.makeDir = fs.makeDir
 local function oMakeDir(path)
 	if string.lower(path) == 'startup' then
@@ -389,7 +389,7 @@ local function oMakeDir(path)
 	return native.makeDir(path)
 end
 fs.makeDir = oMakeDir
- 
+
 native.delete = fs.delete
 local function oDelete(path)
 	if string.lower(path) == 'startup' then
@@ -397,7 +397,7 @@ local function oDelete(path)
 	end
 	if isHidden(path) == true then
 		return
-	elseif string.starts(string.lower(path), string.lower(osDir['tmp']) .. '/') then 
+	elseif string.starts(string.lower(path), string.lower(osDir['tmp']) .. '/') then
 		if perm < 3 then
 			error('Access Denied!', 2)
 		end
@@ -408,7 +408,7 @@ local function oDelete(path)
 	native.delete(path)
 end
 fs.delete = oDelete
- 
+
 native.open = fs.open
 local function oOpen(path, mode)
 	if string.lower(path) == 'startup' then
@@ -427,8 +427,8 @@ local function oOpen(path, mode)
 	return native.open(path, mode)
 end
 fs.open = oOpen
- 
- -- moves the specified file replacing any existing one
+
+-- moves the specified file replacing any existing one
 function fs.replace(from, to)
 	if shell.getRunningProgram() == (osDir['bin'] .. '/apt-get') then -- a little hack to allow apt-get to update system files
 		if native.exists(to) then
@@ -441,8 +441,8 @@ function fs.replace(from, to)
 		end
 		fs.move(from, to)
 	end
- end
- 
+end
+
 native.isReadOnly = fs.isReadOnly
 local function oIsReadOnly(path)
 	if string.lower(path) == 'startup' then
@@ -453,7 +453,7 @@ local function oIsReadOnly(path)
 	elseif string.starts(string.lower(path), osDir['tmp'] .. '/') then
 		return (not perm == 4)
 	else
-		for i=1, #hiddenFolders do
+		for i = 1, #hiddenFolders do
 			if string.starts(string.lower(path), string.lower(hiddenFolders[i]) .. '/') then
 				return true
 			end
@@ -462,7 +462,7 @@ local function oIsReadOnly(path)
 	return native.isReadOnly(path)
 end
 fs.isReadOnly = oIsReadOnly
- 
+
 native.getSize = fs.getSize
 local function oGetSize(path)
 	if string.lower(path) == 'startup' then
@@ -474,7 +474,7 @@ local function oGetSize(path)
 	return native.getSize(path)
 end
 fs.getSize = oGetSize
- 
+
 native.move = fs.move
 local function oMove(fromPath, toPath)
 	if string.lower(fromPath) == 'startup' then
@@ -489,7 +489,7 @@ local function oMove(fromPath, toPath)
 	return native.move(fromPath, toPath)
 end
 fs.move = oMove
- 
+
 native.copy = fs.copy
 local function oCopy(fromPath, toPath)
 	if string.lower(fromPath) == 'startup' then
@@ -535,7 +535,7 @@ local function catchTerminate()
 end
 
 local function cacheHardware()
-	for i=1, #sides do
+	for i = 1, #sides do
 		if peripheral.isPresent(sides[i]) then
 			print('found a ', peripheral.getType(sides[i]), ' at ', sides[i])
 			peri[sides[i]] = NewPeripheral(peripheral.getType(sides[i]), peripheral.wrap(sides[i]))
@@ -554,9 +554,9 @@ local function closeStartMenu()
 	end
 	local c = term.getBackgroundColor()
 	term.setBackgroundColor(config['desktop'])
-	for i=math.max(math.ceil(h / 2), 8), (h - 1) do
+	for i = math.max(math.ceil(h / 2), 8), (h - 1) do
 		term.setCursorPos(1, i)
-		for j=1, math.floor(w / 3) do
+		for j = 1, math.floor(w / 3) do
 			write(' ')
 		end
 		sleep(0.025)
@@ -571,9 +571,9 @@ local function drawStartMenu(opening)
 	end
 	local lastColor = term.getBackgroundColor()
 	term.setBackgroundColor(colors.blue)
-	for i=(h - 1), math.max(math.ceil(h / 2), 8), -1 do
+	for i = (h - 1), math.max(math.ceil(h / 2), 8), -1 do
 		term.setCursorPos(1, i)
-		for j=1, math.floor(w / 3) do
+		for j = 1, math.floor(w / 3) do
 			if i == (h - 1) and j == math.floor(w / 3) then -- logout (bottom row)
 				local fg = term.getTextColor()
 				term.setBackgroundColor(colors.red)
@@ -582,9 +582,11 @@ local function drawStartMenu(opening)
 				term.setBackgroundColor(colors.blue)
 				term.setTextColor(fg)
 			elseif i == (h - 4) and j > (math.floor(w / 3) - 8) and shell.resolveProgram('explorer') then
-				term.writeColored(string.sub('computer', j - math.floor(w / 3) - 1, j - math.floor(w / 3) - 1), colors.black, colors.blue)
+				term.writeColored(string.sub('computer', j - math.floor(w / 3) - 1, j - math.floor(w / 3) - 1),
+					colors.black, colors.blue)
 			elseif i == (h - 3) and j > (math.floor(w / 3) - 3) then
-				term.writeColored(string.sub('cmd', j - math.floor(w / 3) - 1, j - math.floor(w / 3) - 1), colors.black, colors.blue)
+				term.writeColored(string.sub('cmd', j - math.floor(w / 3) - 1, j - math.floor(w / 3) - 1), colors.black,
+					colors.blue)
 			elseif i == math.max(math.ceil(h / 2), 8) then -- username (top row)
 				if j <= string.len(username) then
 					term.writeColored(string.sub(username, j, j), colors.gray, colors.lightBlue)
@@ -675,14 +677,14 @@ loading = false
 -- load the config
 if fs.exists(osDir['cfg'] .. '/cfg') then -- before native replaces default
 	doAsOS(function()
-			for line in io.lines(osDir['cfg'] .. '/cfg') do
-				for k,v in pairs(config) do
-					if string.starts(line, k .. '=') then
-						config[k] = os.castToTypeOf(string.sub(line, string.len(k) + 2, string.len(line)), v)
-					end
+		for line in io.lines(osDir['cfg'] .. '/cfg') do
+			for k, v in pairs(config) do
+				if string.starts(line, k .. '=') then
+					config[k] = os.castToTypeOf(string.sub(line, string.len(k) + 2, string.len(line)), v)
 				end
 			end
-		end)
+		end
+	end)
 end
 
 -- load hardware into cache
@@ -721,11 +723,11 @@ function doLogin()
 			perm = tonumber(string.sub(perm, string.len(perm) - 1, string.len(perm)))
 			term.writeColored('Login successful!\n', colors.green)
 			os.getPermLevel = function()
-					return perm
-				end
+				return perm
+			end
 			os.getUsername = function()
-					return username
-				end
+				return username
+			end
 		else
 			term.writeColored('Login failure!', colors.red)
 		end
@@ -736,6 +738,7 @@ function doLogin()
 	native.os = os
 	os = os.readOnly(os)
 end
+
 doLogin()
 
 if config['update'] and perm == 3 then
@@ -763,12 +766,12 @@ if config['update'] and perm == 3 then
 			os.loading(colors.blue)
 		end
 	)
-	write('\n') -- just to make it look better
+	write('\n')                                         -- just to make it look better
 	if downloaded then
 		local file = native.open(osDir['tmp'] .. '/ver', 'r') -- basically doAsOS
-		local version = file.readLine() -- only one line
+		local version = file.readLine()                 -- only one line
 		file.close()
-		native.delete(osDir['tmp'] .. '/ver') -- delete the temporary file
+		native.delete(osDir['tmp'] .. '/ver')           -- delete the temporary file
 		if tonumber(version) > os.getVersion() then
 			term.writeColored('A new version (' .. version .. ') is available!\n', colors.yellow)
 			term.writeColored('Update [Y/n]? ', colors.cyan)
@@ -806,29 +809,29 @@ while true do
 	os.clear()
 	term.writeColored(err, colors.red)
 	err = ''
-	
+
 	-- draw the start button
 	term.setBackgroundColor(colors.green)
-	
+
 	-- draw start button
 	term.setCursorPos(1, h)
 	term.writeColored('menu', colors.white)
 	drawStartMenu()
-	
+
 	-- draw taskbar
 	term.setBackgroundColor(colors.cyan)
-	for i=5, w do
+	for i = 5, w do
 		term.setCursorPos(i, h)
 		write(' ')
 	end
-	
+
 	term.setBackgroundColor(lastBG)
 	term.setTextColor(lastFG)
 	term.setCursorPos(1, 1)
-	
+
 	-- do the update
 	parallel.waitForAny(catchTerminate, acceptMouseInput, acceptKeyboardInput) -- wait for input
-	parallel.waitForAny(catchTerminate, callWrapper) -- run the requested program (if any) until termination
+	parallel.waitForAny(catchTerminate, callWrapper)                        -- run the requested program (if any) until termination
 end
 
 -- allow terminate from other programs (needed?)
